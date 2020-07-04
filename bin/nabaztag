@@ -10,13 +10,13 @@ set_defaults() {
 
 	RANDOM=$$; left_pos=$(($RANDOM % 17)); right_pos=$(($RANDOM % 17))
 
-	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\"}"
-	#EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}}"
-	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"event\\\": true}"
-	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\"}"
-	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\"}"
-	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\"}"
-	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\"}"
+	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
+	#EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"request_id\\\": \\\"nabaztag\\\"}"
+	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"event\\\": true, \\\"request_id\\\": \\\"nabaztag\\\"}"
+	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
+	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
+	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
+	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
 	PACKET=""
 
 	if [ -t 1 ]; then

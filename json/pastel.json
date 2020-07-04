@@ -1,2 +1,2 @@
-{"type":"command", "requestd_id": 5, "sequence": [{"audio": ["nabsurprised/respirations/Respiration05.mp3", "nabsurprised/respirations/Respiration05.mp3"] , "choreography": "urn:x-chor:streaming:5"}], "cancelable": true}
-{"type": "gestalt"}
+{"type":"command", "request_id": "pastel", "sequence": [{"audio": ["nabsurprised/respirations/Respiration05.mp3", "nabsurprised/respirations/Respiration05.mp3"] , "choreography": "urn:x-chor:streaming:5"}], "cancelable": true}
+{"type": "gestalt", "request_id": "nabaztag"}

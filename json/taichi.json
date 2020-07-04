@@ -1,2 +1,2 @@
-{"type":"command", "requestd_id": 1, "sequence": [{"choreography": "nabtaichid/taichi.chor"}], "cancelable": true}
-{"type": "gestalt"}
+{"type":"command", "request_id": "taichi", "sequence": [{"choreography": "nabtaichid/taichi.chor"}], "cancelable": true}
+{"type": "gestalt", "request_id": "nabaztag"}

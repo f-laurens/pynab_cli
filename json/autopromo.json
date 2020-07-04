@@ -1,2 +1,2 @@
-{"type":"command", "requestd_id": 1, "sequence": [{"audio": "nabsurprised/autopromo/*.mp3", "choreography": "urn:x-chor:streaming"}], "cancelable": true}
-{"type": "gestalt"}
+{"type":"command", "request_id": "autopromo", "sequence": [{"audio": "nabsurprised/autopromo/*.mp3", "choreography": "urn:x-chor:streaming"}], "cancelable": true}
+{"type": "gestalt", "request_id": "nabaztag"}
