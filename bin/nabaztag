@@ -11,7 +11,8 @@ set_defaults() {
 	RANDOM=$$; left_pos=$(($RANDOM % 17)); right_pos=$(($RANDOM % 17))
 
 	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\"}"
-	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}}"
+	#EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}}"
+	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"event\\\": true}"
 	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\"}"
 	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\"}"
 	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\"}"
