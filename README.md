@@ -1,6 +1,6 @@
 # pynab_cli
 
-A collection of small command line tools for [Pynab](https://github.com/nabaztag2018/pynab)-powered Nabaztag rabbits that have been revived using the [Tag:tag:tag](https://www.tagtagtag.fr/index_eng.html) card.
+A collection of small command line tools for [Pynab](https://github.com/nabaztag2018/pynab)-running Nabaztag rabbits that have been revived using the [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w)-powered [Tag:tag:tag](https://www.tagtagtag.fr/index_eng.html) card.
 
 ## nabaztag
 
@@ -25,9 +25,11 @@ Examples of JSON command files are provided in the `json` directory.
 A script to get/set the rabbit's Tag:tag:tag sound card low/high volume levels.
 
 		pi@Nabaztag:~ $ tagtagtag-sound -h
-		Usage: tagtagtag-sound [-m low | -M high]
-			 no option :	get Nabaztag:tag sound volume levels
+		Usage: tagtagtag-sound [-t | -T] [-m low | -M high]
+			 no option :	get sound volume levels
 				-h :	this usage help
+				-t :	handle volume for Nabaztag
+				-T :	handle volume for Nabaztag:tag (default)
 				-m :	set minimum volume level
 				-M :	set maximum volume level
 

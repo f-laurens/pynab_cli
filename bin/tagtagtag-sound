@@ -5,17 +5,7 @@ set_defaults() {
 	MIXER_CONF_FILE="/var/lib/tagtagtag-sound/mixer.conf"
 	MIXER_PID_FILE="/run//tagtagtag-mixerd.pid"
 
-	#MODEL="Nabaztag"	# Uncomment if Nabaztag
-	MODEL="Nabaztag:tag"	# Uncomment if Nabaztag:tag
-
-	if [ "${MODEL}" = "Nabaztag:tag" ]; then
-		SPEAKER_LOW_KEY="tagtag-speaker-low"; SPEAKER_HIGH_KEY="tagtag-speaker-high"
-	elif [ "${MODEL}" = "Nabaztag" ]; then
-		SPEAKER_LOW_KEY="tag-speaker-low"; SPEAKER_HIGH_KEY="tag-speaker-high"
-	else
-		echo "Unsupportd model: ${MODEL}!"
-		exit 42
-	fi
+	MODEL="Nabaztag:tag"
 	SPEAKER_LOW=""; SPEAKER_HIGH=""
 
 	if [ -t 1 ]; then
@@ -29,19 +19,23 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo "Usage: $(basename ${0}) [-m low | -M high]"
-	echo "\t no option :\tget ${MODEL} sound volume levels"
+	echo "Usage: $(basename ${0}) [-t | -T] [-m low | -M high]"
+	echo "\t no option :\tget sound volume levels"
 	echo "\t\t-h :\tthis usage help"
+	echo "\t\t-t :\thandle volume for Nabaztag"
+	echo "\t\t-T :\thandle volume for Nabaztag:tag (default)"
 	echo "\t\t-m :\tset minimum volume level"
 	echo "\t\t-M :\tset maximum volume level"
 }
 # ------------------------------
 get_options() {
-	while getopts "m:M:h" option
+	while getopts "tTm:M:h" option
 	do
 		case $option in
 		    m) SPEAKER_LOW="$OPTARG" ;;
 		    M) SPEAKER_HIGH="$OPTARG" ;;
+		    t) MODEL="Nabaztag" ;;
+		    T) MODEL="Nabaztag:tag" ;;
 		    h) usage; exit 0 ;;
 		    \?) usage; exit 42 ;;
 		esac
@@ -50,8 +44,16 @@ get_options() {
 # ------------------------------
 run_cmd() {
 	if [ -f "$MIXER_CONF_FILE" ]; then
-		CUR_SPEAKER_LOW=$(grep "${SPEAKER_LOW_KEY}=" ${MIXER_CONF_FILE} | sed -e "s/${SPEAKER_LOW_KEY}=//")
-		CUR_SPEAKER_HIGH=$(grep "${SPEAKER_HIGH_KEY}=" ${MIXER_CONF_FILE} | sed -e "s/${SPEAKER_HIGH_KEY}=//")
+		if [ "${MODEL}" = "Nabaztag:tag" ]; then
+			SPEAKER_LOW_KEY="tagtag-speaker-low"; SPEAKER_HIGH_KEY="tagtag-speaker-high"
+		elif [ "${MODEL}" = "Nabaztag" ]; then
+			SPEAKER_LOW_KEY="tag-speaker-low"; SPEAKER_HIGH_KEY="tag-speaker-high"
+		else
+			echo "Unsupported model: ${MODEL}!"
+			exit 42
+		fi
+		CUR_SPEAKER_LOW=$(grep "^${SPEAKER_LOW_KEY}=" ${MIXER_CONF_FILE} | sed -e "s/${SPEAKER_LOW_KEY}=//")
+		CUR_SPEAKER_HIGH=$(grep "^${SPEAKER_HIGH_KEY}=" ${MIXER_CONF_FILE} | sed -e "s/${SPEAKER_HIGH_KEY}=//")
 
 		if [ -n "${SPEAKER_LOW}" ]; then
 			case ${SPEAKER_LOW} in
@@ -78,7 +80,7 @@ run_cmd() {
 		fi
 
 		if [ "${SPEAKER_LOW}" != "${CUR_SPEAKER_LOW}" ] || [ "${SPEAKER_HIGH}" != "${CUR_SPEAKER_HIGH}" ]; then
-			sudo sed -i -e "s/${SPEAKER_LOW_KEY}=${CUR_SPEAKER_LOW}/${SPEAKER_LOW_KEY}=${SPEAKER_LOW}/" -e "s/${SPEAKER_HIGH_KEY}=${CUR_SPEAKER_HIGH}/${SPEAKER_HIGH_KEY}=${SPEAKER_HIGH}/" ${MIXER_CONF_FILE}
+			sudo sed -i -e "s/^${SPEAKER_LOW_KEY}=${CUR_SPEAKER_LOW}/${SPEAKER_LOW_KEY}=${SPEAKER_LOW}/" -e "s/^${SPEAKER_HIGH_KEY}=${CUR_SPEAKER_HIGH}/${SPEAKER_HIGH_KEY}=${SPEAKER_HIGH}/" ${MIXER_CONF_FILE}
 			status=$?
 			if [ $status -ne 0 ]; then
 				echo "${BOLD}Could not update sound driver configuration file '$MIXER_CONF_FILE'!${STD}"
@@ -90,9 +92,9 @@ run_cmd() {
 				echo "${BOLD}Could not signal sound driver!${STD}"
 				exit $status
 			fi
-			echo "Speaker low level: ${GREEN}${CUR_SPEAKER_LOW}${STD} => ${BLUE}${SPEAKER_LOW}${STD}\thigh level: ${GREEN}${CUR_SPEAKER_HIGH}${STD} => ${BLUE}${SPEAKER_HIGH}${STD}" 
+			echo "${BOLD}${MODEL}${STD} speaker low level: ${GREEN}${CUR_SPEAKER_LOW}${STD} => ${BLUE}${SPEAKER_LOW}${STD}\thigh level: ${GREEN}${CUR_SPEAKER_HIGH}${STD} => ${BLUE}${SPEAKER_HIGH}${STD}" 
 		else
-			echo "Speaker low level: ${BOLD}${CUR_SPEAKER_LOW}${STD}\thigh level: ${BOLD}${CUR_SPEAKER_HIGH}${STD}" 
+			echo "${BOLD}${MODEL}${STD} speaker low level: ${BOLD}${CUR_SPEAKER_LOW}${STD}\thigh level: ${BOLD}${CUR_SPEAKER_HIGH}${STD}" 
 		fi
 
 	else
