@@ -1,0 +1,87 @@
+#!/bin/bash
+# Get/set Nabaztag state thru nabd
+# ref: https://github.com/nabaztag2018/pynab/blob/master/PROTOCOL.md
+# ------------------------------
+set_defaults() {
+	NETCAT_OPTS0="-4 -N -d -w 1 -v"
+	NETCAT_OPTS2="-4 -w 2 -v"
+	NETCAT_OPTS5="-4 -w 5 -v"
+	NAB_HOST=localhost; NAB_PORT=10543
+
+	RANDOM=$$; left_pos=$(($RANDOM % 17)); right_pos=$(($RANDOM % 17))
+
+	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\"}"
+	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}}"
+	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\"}"
+	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\"}"
+	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\"}"
+	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\"}"
+	PACKET=""
+
+	if [ -t 1 ]; then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+	else
+		BOLD=""; STD=""
+	fi
+}
+# ------------------------------
+usage() {
+	echo -e "Usage: $(basename ${0}) [-g | -e | -l | -s |-w | -r | -c commandfile]"
+	echo -e "\t no option :\tget state"
+	echo -e "\t\t-h :\tthis usage help"
+	echo -e "\t\t-g :\tget gestalt status"
+	echo -e "\t\t-e :\texecute ears test"
+	echo -e "\t\t-l :\texecute LEDs test"
+	echo -e "\t\t-s :\tgo to sleep"
+	echo -e "\t\t-w :\twake up"
+	echo -e "\t\t-r :\trotate ears to random position"
+	echo -e "\t\t-c :\texecute given JSON command file"
+}
+# ------------------------------
+get_options() {
+	while getopts "gelswrc:h" option
+	do
+		case $option in
+		    g) PACKET=$GESTALT_PACKET ;;
+		    e) PACKET=$TEST_EARS_PACKET ;;
+		    l) PACKET=$TEST_LEDS_PACKET ;;
+		    s) PACKET=$SLEEP_PACKET ;;
+		    w) PACKET=$WAKEUP_PACKET ;;
+		    r) PACKET=$EARS_PACKET ;;
+		    c) CMD_FILE="$OPTARG" ;;
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+}
+# ------------------------------
+run_cmd() {
+	if [ -z "$PACKET" ]; then
+		if [ -n "$CMD_FILE" ]; then
+			if [ -f "$CMD_FILE" ]; then
+				cmd="cat $CMD_FILE | netcat $NETCAT_OPTS5 $NAB_HOST $NAB_PORT"; echo "${BOLD}${cmd}${STD}"
+				eval $cmd
+			else
+				echo "${BOLD}JSON command file '$CMD_FILE' not found!${STD}"
+				exit 1
+			fi
+		else
+			cmd="netcat $NETCAT_OPTS0 $NAB_HOST $NAB_PORT"; echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+		fi
+	else
+		cmd="echo $PACKET | netcat $NETCAT_OPTS2 $NAB_HOST $NAB_PORT"; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+	fi
+	status=$?
+}
+
+# ------------------------------
+set_defaults
+get_options $*
+run_cmd
+# ------------------------------
+exit $status
+#
+

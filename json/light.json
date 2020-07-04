@@ -1,0 +1,2 @@
+{"type":"command", "requestd_id": 2, "sequence": [{"audio": ["nabsurprised/respirations/Respiration02.mp3", "nabsurprised/respirations/Respiration02.mp3"] , "choreography": "urn:x-chor:streaming:2"}], "cancelable": true}
+{"type": "gestalt"}

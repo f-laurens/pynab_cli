@@ -1,0 +1,105 @@
+#!/bin/sh
+# Restore pynab PostgreSQL database
+# ------------------------------
+set_defaults() {
+	# psql option defaults
+	#PSQL_OPTS="-e -E"
+	PSQL_OPTS="-a"
+	DB_USER=postgres 
+	DB_NAME=pynab
+	DB_BACKUP=${DB_NAME}.db.sql
+
+	# Pynab services to stop before restoring database
+	PYNAB_SERVICES=$(cd /lib/systemd/system; /bin/ls nab*d.service)
+	NABD_SERVICE="nabd.service" ; NABD_SOCKET="nabd.socket"
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+	else
+		BOLD=""; STD=""
+	fi
+}
+# ------------------------------
+usage() {
+	echo "Usage: $(basename ${0}) [-u DB_USER] [-b DB_BACKUP_FILE]"
+	echo "\tRestore (as user DB_USER) PostgreSQL database from file DB_BACKUP_FILE"
+	echo "\tdefaults: DB_USER=${DB_USER} DB_BACKUP_FILE=${DB_BACKUP}"
+}
+# ------------------------------
+get_options() {
+	while getopts "u:b:h" option
+	do
+		case $option in
+		    u) DB_USER="$OPTARG" ;;
+		    b) DB_BACKUP="$OPTARG" ;;
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+}
+# ------------------------------
+stop_services() {
+	if [ -n "${PYNAB_SERVICES}" ]
+	then
+		echo "Stopping Pynab services..."
+		for service in ${PYNAB_SERVICES}
+		do
+			[ "${service}" = "${NABD_SERVICE}" ] && continue
+			cmd="sudo systemctl stop ${service}" ; echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+			status=$? ; [ $status -ne 0 ] && return $status
+		done
+		cmd="sudo systemctl stop ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl stop ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+start_services() {
+	if [ -n "${PYNAB_SERVICES}" ]
+	then
+		echo "Restarting Pynab services..."
+		cmd="sudo systemctl start ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl start ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		for service in ${PYNAB_SERVICES}
+		do
+			[ "${service}" = "${NABD_SERVICE}" ] && continue
+			cmd="sudo systemctl start ${service}" ; echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+			status=$? ; [ $status -ne 0 ] && return $status
+		done
+
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+restore_db() {
+	echo "Restoring PostgreSQL database from file '${DB_BACKUP}'..."
+	cmd="sudo -u ${DB_USER} psql -U ${DB_USER} ${PSQL_OPTS} < ${DB_BACKUP}" ; echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	return $status
+}
+# ------------------------------
+set_defaults
+get_options $*
+stop_services && restore_db
+start_services
+# ------------------------------
+exit $?
+#

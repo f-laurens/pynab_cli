@@ -1,0 +1,8 @@
+{"type":"command", "requestd_id": 0, "sequence": [{"audio": ["nabsurprised/respirations/Respiration07.mp3", "nabsurprised/respirations/Respiration07.mp3"] , "choreography": "urn:x-chor:streaming:0"}], "cancelable": true}
+{"type":"command", "requestd_id": 1, "sequence": [{"audio": ["nabsurprised/respirations/Respiration01.mp3", "nabsurprised/respirations/Respiration01.mp3"] , "choreography": "urn:x-chor:streaming:1"}], "cancelable": true}
+{"type":"command", "requestd_id": 2, "sequence": [{"audio": ["nabsurprised/respirations/Respiration02.mp3", "nabsurprised/respirations/Respiration02.mp3"] , "choreography": "urn:x-chor:streaming:2"}], "cancelable": true}
+{"type":"command", "requestd_id": 3, "sequence": [{"audio": ["nabsurprised/respirations/Respiration03.mp3", "nabsurprised/respirations/Respiration03.mp3"] , "choreography": "urn:x-chor:streaming:3"}], "cancelable": true}
+{"type":"command", "requestd_id": 4, "sequence": [{"audio": ["nabsurprised/respirations/Respiration04.mp3", "nabsurprised/respirations/Respiration04.mp3"] , "choreography": "urn:x-chor:streaming:4"}], "cancelable": true}
+{"type":"command", "requestd_id": 5, "sequence": [{"audio": ["nabsurprised/respirations/Respiration05.mp3", "nabsurprised/respirations/Respiration05.mp3"] , "choreography": "urn:x-chor:streaming:5"}], "cancelable": true}
+{"type":"command", "requestd_id": 6, "sequence": [{"audio": ["nabsurprised/respirations/Respiration06.mp3", "nabsurprised/respirations/Respiration06.mp3"] , "choreography": "urn:x-chor:streaming:6"}], "cancelable": true}
+{"type": "gestalt"}

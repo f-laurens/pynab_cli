@@ -1,0 +1,53 @@
+#!/bin/sh
+# Backup pynab PostgreSQL database
+# ------------------------------
+set_defaults() {
+	# pg_dump option defaults
+	PG_DUMP_OPTS="-F p -C -c --if-exists -v"
+	DB_USER=postgres 
+	DB_NAME=pynab
+	DB_BACKUP=${DB_NAME}.db.sql
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+	else
+		BOLD=""; STD=""
+	fi
+}
+# ------------------------------
+usage() {
+	echo "Usage: $(basename ${0}) [-u DB_USER] [-d DB_NAME] [-b DB_BACKUP_FILE]"
+	echo "\tBackup (as user DB_USER) PostgreSQL database DB_NAME to file DB_BACKUP_FILE"
+	echo "\tdefaults: DB_USER=${DB_USER} DB_NAME=${DB_NAME} DB_BACKUP_FILE=${DB_BACKUP}"
+}
+# ------------------------------
+get_options() {
+	while getopts "u:d:b:h" option
+	do
+		case $option in
+		    u) DB_USER="$OPTARG" ;;
+		    d) DB_NAME="$OPTARG" ; DB_BACKUP="${DB_NAME}.db.sql" ;;
+		    b) DB_BACKUP="$OPTARG" ;;
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+}
+# ------------------------------
+backup_db() {
+	echo "Dumping PostgreSQL database '${DB_NAME}' to file '${DB_BACKUP}'..."
+	cmd="sudo -u ${DB_USER} pg_dump -U ${DB_USER} ${PG_DUMP_OPTS} ${DB_NAME} > ${DB_BACKUP}" ; echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	[ $status -ne 0 ] && sudo /bin/rm -f ${DB_BACKUP}
+	return $status
+}
+# ------------------------------
+set_defaults
+get_options $*
+backup_db
+# ------------------------------
+exit $?
+#
