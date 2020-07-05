@@ -50,3 +50,17 @@ Scripts to backup and restore the rabbit's Pynab PostgreSQL database.
 **Note:**  
 Backup can be done on the fly (while the rabbit's Pynab services are running). According to PostgreSQL documentation, the backup is consistent (based on a 'snapshot' of the database).  
 On the other hand restore must be done without concurrent accesses to the database (so that it can be re-created). Pynab services must therefore be stopped beforehand and restarted after the backup (the script takes care of this).
+
+## pynab
+
+A script to manage Pynab services.
+		
+		pi@Nabaztag:~ $ pynab -h
+		Usage: pynab [-status | -start | -stop | -restart | -log]
+			no option :	show status of Pynab services
+			    -help :	this usage help
+			   -start :	start Pynab services
+			    -stop :	stop Pynab services
+			 -restart :	restart Pynab services
+			  -status :	show status of Pynab services
+			     -log :	show log tails for Pynab daemons

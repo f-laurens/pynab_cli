@@ -1,0 +1,146 @@
+#!/bin/sh
+# Manage Pynab services
+# ------------------------------
+set_defaults() {
+	ARG=${1:-"-status"}
+	LOG_DIR="/var/log"
+	LOG_OPTS="-v -n 10"
+	STATUS_OPTS="--no-pager --full"
+
+	# Pynab services to handle
+	NABD_SERVICE="nabd" ; NABD_SOCKET="nabd.socket"
+	NABD_LOG="${LOG_DIR}/${NABD_SERVICE}.log"
+	service_list=$(cd /lib/systemd/system; /bin/ls nab*d.service 2>/dev/null | sed -e "s/\.service//g")
+	for service in ${service_list}
+	do
+		[ "${service}" = "${NABD_SERVICE}" ] && continue
+		daemon_services="${daemon_services} ${service}"
+		DAEMON_LOGS="${DAEMON_LOGS} ${LOG_DIR}/${service}.log"
+	done
+	web_services="nabweb nabblockly"
+	PYNAB_SERVICES="${daemon_services} ${web_services}"
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+	else
+		BOLD=""; STD=""
+	fi
+}
+# ------------------------------
+usage() {
+	if [ -n "${1}" ]
+	then
+		echo "$(basename ${0}): illegal option ${1}"
+	fi
+	echo "Usage: $(basename ${0}) [-status | -start | -stop | -restart | -log]"
+	echo "\tno option :\tshow status of Pynab services"
+	echo "\t    -help :\tthis usage help"
+	echo "\t   -start :\tstart Pynab services"
+	echo "\t    -stop :\tstop Pynab services"
+	echo "\t -restart :\trestart Pynab services"
+	echo "\t  -status :\tshow status of Pynab services"
+	echo "\t     -log :\tshow log tails for Pynab daemons"
+}
+# ------------------------------
+stop_services() {
+	if [ -n "${PYNAB_SERVICES}" ]
+	then
+		echo "Stopping Pynab services..."
+		cmd="sudo systemctl stop ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl stop ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl stop ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+start_services() {
+	if [ -n "${PYNAB_SERVICES}" ]
+	then
+		echo "Starting Pynab services..."
+		cmd="sudo systemctl start ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl start ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl start ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+status_services() {
+	if [ -n "${PYNAB_SERVICES}" ]
+	then
+		echo "Status of Pynab services:"
+		cmd="systemctl ${STATUS_OPTS} status ${NABD_SOCKET}" ; echo "\n${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$?
+		cmd="systemctl ${STATUS_OPTS} status ${NABD_SERVICE}" ; echo "\n${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$?
+		cmd="systemctl ${STATUS_OPTS} status ${PYNAB_SERVICES}" ; echo "\n${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$?
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+log_services() {
+	if [ -n "${DAEMON_LOGS}" ]
+	then
+		echo "Log tails for Pynab daemons:"
+		cmd="tail ${LOG_OPTS} ${DAEMON_LOGS}" ; echo "\n${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$?
+		cmd="tail ${LOG_OPTS} ${NABD_LOG}" ; echo "\n${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$?
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+set_defaults $*
+case "${ARG}" in
+    -star*)
+	start_services
+	exit $? ;;
+    -sto*)
+	stop_services
+	exit $? ;;
+    -stat*)
+	status_services
+	exit $? ;;
+    -r*)
+	stop_services && start_services
+	exit $? ;;
+    -l*)
+	log_services
+	exit $? ;;
+    -h*)
+	usage
+	exit 0 ;;
+    *)
+	usage "${ARG}"
+	exit 42 ;;
+esac
+# ------------------------------
+exit $?
+#

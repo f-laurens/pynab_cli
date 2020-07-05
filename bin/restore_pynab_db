@@ -10,8 +10,15 @@ set_defaults() {
 	DB_BACKUP=${DB_NAME}.db.sql
 
 	# Pynab services to stop before restoring database
-	PYNAB_SERVICES=$(cd /lib/systemd/system; /bin/ls nab*d.service)
-	NABD_SERVICE="nabd.service" ; NABD_SOCKET="nabd.socket"
+	NABD_SERVICE="nabd" ; NABD_SOCKET="nabd.socket"
+	service_list=$(cd /lib/systemd/system; /bin/ls nab*d.service 2>/dev/null | sed -e "s/\.service//g")
+	for service in ${service_list}
+	do
+		[ "${service}" = "${NABD_SERVICE}" ] && continue
+		daemon_services="${daemon_services} ${service}"
+	done
+	web_services="nabweb nabblockly"
+	PYNAB_SERVICES="${daemon_services} ${web_services}"
 
 	if [ -t 1 ]
 	then
@@ -44,20 +51,15 @@ stop_services() {
 	if [ -n "${PYNAB_SERVICES}" ]
 	then
 		echo "Stopping Pynab services..."
-		for service in ${PYNAB_SERVICES}
-		do
-			[ "${service}" = "${NABD_SERVICE}" ] && continue
-			cmd="sudo systemctl stop ${service}" ; echo "${BOLD}${cmd}${STD}"
-			eval $cmd
-			status=$? ; [ $status -ne 0 ] && return $status
-		done
+		cmd="sudo systemctl stop ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
 		cmd="sudo systemctl stop ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
 		cmd="sudo systemctl stop ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
-
 	else
 		status=0
 	fi
@@ -74,14 +76,9 @@ start_services() {
 		cmd="sudo systemctl start ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
-		for service in ${PYNAB_SERVICES}
-		do
-			[ "${service}" = "${NABD_SERVICE}" ] && continue
-			cmd="sudo systemctl start ${service}" ; echo "${BOLD}${cmd}${STD}"
-			eval $cmd
-			status=$? ; [ $status -ne 0 ] && return $status
-		done
-
+		cmd="sudo systemctl start ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
 	else
 		status=0
 	fi
