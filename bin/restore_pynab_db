@@ -11,8 +11,8 @@ set_defaults() {
 
 	# Pynab services to stop before restoring database
 	NABD_SERVICE="nabd" ; NABD_SOCKET="nabd.socket"
-	service_list=$(cd /lib/systemd/system; /bin/ls nab*d.service 2>/dev/null | sed -e "s/\.service//g")
-	for service in ${service_list}
+	daemon_list=$(cd /lib/systemd/system; /bin/ls nab*d.service 2>/dev/null | sed -e "s/\.service//g")
+	for service in ${daemon_list}
 	do
 		[ "${service}" = "${NABD_SERVICE}" ] && continue
 		daemon_services="${daemon_services} ${service}"
@@ -20,8 +20,7 @@ set_defaults() {
 	web_services="nabweb nabblockly"
 	PYNAB_SERVICES="${daemon_services} ${web_services}"
 
-	if [ -t 1 ]
-	then
+	if [ -t 1 ]; then
 		# Text attributes
 		BOLD=`tput bold`; STD=`tput sgr0`
 	else
@@ -48,8 +47,7 @@ get_options() {
 }
 # ------------------------------
 stop_services() {
-	if [ -n "${PYNAB_SERVICES}" ]
-	then
+	if [ -n "${PYNAB_SERVICES}" ]; then
 		echo "Stopping Pynab services..."
 		cmd="sudo systemctl stop ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
@@ -67,8 +65,7 @@ stop_services() {
 }
 # ------------------------------
 start_services() {
-	if [ -n "${PYNAB_SERVICES}" ]
-	then
+	if [ -n "${PYNAB_SERVICES}" ]; then
 		echo "Restarting Pynab services..."
 		cmd="sudo systemctl start ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd

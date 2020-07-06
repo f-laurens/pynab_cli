@@ -8,8 +8,7 @@ set_defaults() {
 	DB_NAME=pynab
 	DB_BACKUP=${DB_NAME}.db.sql
 
-	if [ -t 1 ]
-	then
+	if [ -t 1 ]; then
 		# Text attributes
 		BOLD=`tput bold`; STD=`tput sgr0`
 	else
