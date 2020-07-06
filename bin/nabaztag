@@ -3,10 +3,10 @@
 # ref: https://github.com/nabaztag2018/pynab/blob/master/PROTOCOL.md
 # ------------------------------
 set_defaults() {
-	NETCAT_OPTS0="-4 -N -d -w 1 -v"
+	NETCAT_OPTS0="-4 -d -w 1 -v"
 	NETCAT_OPTS2="-4 -w 2 -v"
 	NETCAT_OPTS5="-4 -w 5 -v"
-	NAB_HOST=localhost; NAB_PORT=10543
+	NABD_HOST=localhost; NABD_PORT=10543
 
 	RANDOM=$$; left_pos=$(($RANDOM % 17)); right_pos=$(($RANDOM % 17))
 
@@ -61,18 +61,18 @@ run_cmd() {
 	if [ -z "$PACKET" ]; then
 		if [ -n "$CMD_FILE" ]; then
 			if [ -f "$CMD_FILE" ]; then
-				cmd="cat $CMD_FILE | netcat $NETCAT_OPTS5 $NAB_HOST $NAB_PORT"; echo "${BOLD}${cmd}${STD}"
+				cmd="cat $CMD_FILE | nc $NETCAT_OPTS5 $NABD_HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 				eval $cmd
 			else
 				echo "${BOLD}JSON command file '$CMD_FILE' not found!${STD}"
 				exit 1
 			fi
 		else
-			cmd="netcat $NETCAT_OPTS0 $NAB_HOST $NAB_PORT"; echo "${BOLD}${cmd}${STD}"
+			cmd="nc $NETCAT_OPTS0 $NABD_HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 			eval $cmd
 		fi
 	else
-		cmd="echo $PACKET | netcat $NETCAT_OPTS2 $NAB_HOST $NAB_PORT"; echo "${BOLD}${cmd}${STD}"
+		cmd="echo $PACKET | nc $NETCAT_OPTS2 $NABD_HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 	fi
 	status=$?
