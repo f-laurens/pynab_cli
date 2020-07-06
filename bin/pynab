@@ -3,15 +3,19 @@
 # ------------------------------
 set_defaults() {
 	ARG=${1:-"-status"}
+	SELF="$(basename ${0})"
+	SYSTEMD_DIR="/lib/systemd/system"
 	LOG_DIR="/var/log"
 	LOG_OPTS="-v -n 10"
 	STATUS_OPTS="--no-pager --full"
 
 	# Pynab services to handle
 	NABD_SERVICE="nabd" ; NABD_SOCKET="nabd.socket"
+	NABD_SOCKET_CONF="${SYSTEMD_DIR}/${NABD_SOCKET}"
+	NABD_ADDR_KEY="ListenStream"; NABD_LOCAL_ADDR="127.0.0.1"; NABD_PUBLIC_ADDR="0.0.0.0"
 	NABD_LOG="${LOG_DIR}/${NABD_SERVICE}.log"
-	service_list=$(cd /lib/systemd/system; /bin/ls nab*d.service 2>/dev/null | sed -e "s/\.service//g")
-	for service in ${service_list}
+	daemon_list=$(cd ${SYSTEMD_DIR}; /bin/ls nab*d.service 2>/dev/null | sed -e "s/\.service//g")
+	for service in ${daemon_list}
 	do
 		[ "${service}" = "${NABD_SERVICE}" ] && continue
 		daemon_services="${daemon_services} ${service}"
@@ -20,33 +24,32 @@ set_defaults() {
 	web_services="nabweb nabblockly"
 	PYNAB_SERVICES="${daemon_services} ${web_services}"
 
-	if [ -t 1 ]
-	then
+	if [ -t 1 ]; then
 		# Text attributes
 		BOLD=`tput bold`; STD=`tput sgr0`
+		RED=`tput setaf 1`; YELLOW=`tput setaf 3`; GREEN=`tput setaf 2`; BLUE=`tput setaf 4`
 	else
 		BOLD=""; STD=""
+		RED=""; YELLOW=""; GREEN=""; BLUE=""
 	fi
 }
 # ------------------------------
 usage() {
-	if [ -n "${1}" ]
-	then
-		echo "$(basename ${0}): illegal option ${1}"
-	fi
-	echo "Usage: $(basename ${0}) [-status | -start | -stop | -restart | -log]"
+	[ -n "${1}" ] && echo "${SELF}: illegal option ${1}"
+	echo "Usage: ${SELF} [-status | -start | -stop | -restart | -local | -public | -log]"
 	echo "\tno option :\tshow status of Pynab services"
 	echo "\t    -help :\tthis usage help"
 	echo "\t   -start :\tstart Pynab services"
 	echo "\t    -stop :\tstop Pynab services"
 	echo "\t -restart :\trestart Pynab services"
 	echo "\t  -status :\tshow status of Pynab services"
+	echo "\t   -local :\trestrict nabd socket to local access"
+	echo "\t  -public :\topen nabd socket to public access"
 	echo "\t     -log :\tshow log tails for Pynab daemons"
 }
 # ------------------------------
 stop_services() {
-	if [ -n "${PYNAB_SERVICES}" ]
-	then
+	if [ -n "${PYNAB_SERVICES}" ]; then
 		echo "Stopping Pynab services..."
 		cmd="sudo systemctl stop ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
@@ -64,8 +67,7 @@ stop_services() {
 }
 # ------------------------------
 start_services() {
-	if [ -n "${PYNAB_SERVICES}" ]
-	then
+	if [ -n "${PYNAB_SERVICES}" ]; then
 		echo "Starting Pynab services..."
 		cmd="sudo systemctl start ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
@@ -83,8 +85,7 @@ start_services() {
 }
 # ------------------------------
 status_services() {
-	if [ -n "${PYNAB_SERVICES}" ]
-	then
+	if [ -n "${PYNAB_SERVICES}" ]; then
 		echo "Status of Pynab services:"
 		cmd="systemctl ${STATUS_OPTS} status ${NABD_SOCKET}" ; echo "\n${BOLD}${cmd}${STD}"
 		eval $cmd
@@ -95,15 +96,68 @@ status_services() {
 		cmd="systemctl ${STATUS_OPTS} status ${PYNAB_SERVICES}" ; echo "\n${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$?
+
+		systemctl --quiet is-active ${NABD_SOCKET}
+		if [ $? -eq 0 ]; then
+			echo
+			conf_socket
+		fi
 	else
 		status=0
 	fi
 	return $status
 }
 # ------------------------------
+conf_socket() {
+	nabd_addr=$1
+	cur_nabd_addr=$(grep "^${NABD_ADDR_KEY}=" ${NABD_SOCKET_CONF} | sed -e "s/${NABD_ADDR_KEY}=//" -e "s/:.*$//")
+	if [ -z "${cur_nabd_addr}" ]; then
+		echo "${BOLD}Could not access nabd socket configuration file '$NABD_SOCKET_CONF'!${STD}"
+		exit 1
+	fi
+	[ -z "${nabd_addr}" ] && nabd_addr=${cur_nabd_addr}
+
+	if [ "${nabd_addr}" != "${cur_nabd_addr}" ]; then
+		echo "Reconfiguring nabd socket..."
+		sudo sed -i -e "s/^${NABD_ADDR_KEY}=${cur_nabd_addr}/${NABD_ADDR_KEY}=${nabd_addr}/" ${NABD_SOCKET_CONF}
+		status=$?
+		if [ $status -ne 0 ]; then
+			echo "${BOLD}Could not update nabd socket configuration file '$NABD_SOCKET_CONF'!${STD}"
+			exit $status
+		fi
+
+		cmd="sudo systemctl daemon-reload" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		systemctl --quiet is-active ${NABD_SERVICE}
+		if [ $? -eq 0 ]; then
+			cmd="sudo systemctl stop ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+			status=$? ; [ $status -ne 0 ] && return $status
+		fi
+		cmd="sudo systemctl try-restart ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+
+		cmd="systemctl ${STATUS_OPTS} status ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$?
+		echo
+	fi
+
+	case "${nabd_addr}" in
+	    ${NABD_LOCAL_ADDR})
+		echo "Note: ${GREEN}nabd only accessible on local (${nabd_addr}) socket.${STD}" ;;
+	    ${NABD_PUBLIC_ADDR})
+		echo "Warning: ${RED}nabd fully accessible on public (${nabd_addr}) socket.${STD}" ;;
+	    *)
+		echo "Note: ${YELLOW}nabd accessible on specific (${nabd_addr}) socket.${STD}" ;;
+	esac
+	return $status
+}
+# ------------------------------
 log_services() {
-	if [ -n "${DAEMON_LOGS}" ]
-	then
+	if [ -n "${DAEMON_LOGS}" ]; then
 		echo "Log tails for Pynab daemons:"
 		cmd="tail ${LOG_OPTS} ${DAEMON_LOGS}" ; echo "\n${BOLD}${cmd}${STD}"
 		eval $cmd
@@ -131,7 +185,13 @@ case "${ARG}" in
     -r*)
 	stop_services && start_services
 	exit $? ;;
-    -l*)
+    -loc*)
+	conf_socket ${NABD_LOCAL_ADDR}
+	exit $? ;;
+    -p*)
+	conf_socket ${NABD_PUBLIC_ADDR}
+	exit $? ;;
+    -log)
 	log_services
 	exit $? ;;
     -h*)

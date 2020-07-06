@@ -3,21 +3,24 @@
 # ref: https://github.com/nabaztag2018/pynab/blob/master/PROTOCOL.md
 # ------------------------------
 set_defaults() {
+	SELF="$(basename ${0})"
 	NETCAT_OPTS0="-4 -d -w 1 -v"
 	NETCAT_OPTS2="-4 -w 2 -v"
 	NETCAT_OPTS5="-4 -w 5 -v"
 	NABD_HOST=localhost; NABD_PORT=10543
+	requestor="${SELF}@$(hostname)"
 
 	RANDOM=$$; left_pos=$(($RANDOM % 17)); right_pos=$(($RANDOM % 17))
 
-	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
-	#EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"request_id\\\": \\\"nabaztag\\\"}"
-	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"event\\\": true, \\\"request_id\\\": \\\"nabaztag\\\"}"
-	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
-	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
-	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
-	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\", \\\"request_id\\\": \\\"nabaztag\\\"}"
+	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
+	#EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"request_id\\\": \\\"${requestor}\\\"}"
+	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"event\\\": true, \\\"request_id\\\": \\\"${requestor}\\\"}"
+	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
+	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
+	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
+	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
 	PACKET=""
+	HOST=${NABD_HOST}
 
 	if [ -t 1 ]; then
 		# Text attributes
@@ -28,7 +31,8 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo -e "Usage: $(basename ${0}) [-g | -e | -l | -s |-w | -r | -c commandfile]"
+	echo -e "Usage: ${SELF} [-g | -e | -l | -s |-w | -r | -c COMMANDFILE] [HOST]"
+	echo -e "\tTalk to rabbit HOST (default: ${NABD_HOST})"
 	echo -e "\t no option :\tget state"
 	echo -e "\t\t-h :\tthis usage help"
 	echo -e "\t\t-g :\tget gestalt status"
@@ -37,7 +41,7 @@ usage() {
 	echo -e "\t\t-s :\tgo to sleep"
 	echo -e "\t\t-w :\twake up"
 	echo -e "\t\t-r :\trotate ears to random position"
-	echo -e "\t\t-c :\texecute given JSON command file"
+	echo -e "\t\t-c :\texecute given JSON COMMANDFILE"
 }
 # ------------------------------
 get_options() {
@@ -55,24 +59,26 @@ get_options() {
 		    \?) usage; exit 42 ;;
 		esac
 	done
+	shift `expr $OPTIND - 1`
+	[ -n "$1" ] && HOST="$1"
 }
 # ------------------------------
 run_cmd() {
 	if [ -z "$PACKET" ]; then
 		if [ -n "$CMD_FILE" ]; then
 			if [ -f "$CMD_FILE" ]; then
-				cmd="cat $CMD_FILE | nc $NETCAT_OPTS5 $NABD_HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
+				cmd="cat $CMD_FILE | nc $NETCAT_OPTS5 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 				eval $cmd
 			else
 				echo "${BOLD}JSON command file '$CMD_FILE' not found!${STD}"
 				exit 1
 			fi
 		else
-			cmd="nc $NETCAT_OPTS0 $NABD_HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
+			cmd="nc $NETCAT_OPTS0 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 			eval $cmd
 		fi
 	else
-		cmd="echo $PACKET | nc $NETCAT_OPTS2 $NABD_HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
+		cmd="echo $PACKET | nc $NETCAT_OPTS2 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 	fi
 	status=$?
@@ -85,4 +91,3 @@ run_cmd
 # ------------------------------
 exit $status
 #
-

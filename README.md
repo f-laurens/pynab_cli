@@ -7,7 +7,8 @@ A collection of small command line tools for [Pynab](https://github.com/nabaztag
 A script to send packets to the rabbit's nabd daemon, according to the [Pynab protocol](https://github.com/nabaztag2018/pynab/blob/master/PROTOCOL.md).
 
 		pi@Nabaztag:~ $ nabaztag -h
-		Usage: nabaztag [-g | -e | -l | -s |-w | -r | -c commandfile]
+		Usage: nabaztag [-g | -e | -l | -s |-w | -r | -c COMMANDFILE] [HOST]
+			Talk to rabbit HOST (default: localhost)
 			 no option :	get state
 				-h :	this usage help
 				-g :	get gestalt status
@@ -16,9 +17,13 @@ A script to send packets to the rabbit's nabd daemon, according to the [Pynab pr
 				-s :	go to sleep
 				-w :	wake up
 				-r :	rotate ears to random position
-				-c :	execute given JSON command file
+				-c :	execute given JSON COMMANDFILE
 			
-Examples of JSON command files are provided in the `json` directory.	
+Examples of JSON command files are provided in the `json` directory.  
+This script should be usable on a non-rabbit OS, if it provides the `nc` (`netcat`) command.
+
+**Note:**  
+Talking to a remote rabbit is possible only if the nabd socket on this rabbit has been enabled for public access.
 
 ## tagtagtag-sound
 
@@ -56,11 +61,17 @@ On the other hand restore must be done without concurrent accesses to the databa
 A script to manage Pynab services.
 		
 		pi@Nabaztag:~ $ pynab -h
-		Usage: pynab [-status | -start | -stop | -restart | -log]
+		Usage: pynab [-status | -start | -stop | -restart | -local | -public | -log]
 			no option :	show status of Pynab services
 			    -help :	this usage help
 			   -start :	start Pynab services
 			    -stop :	stop Pynab services
 			 -restart :	restart Pynab services
 			  -status :	show status of Pynab services
+			   -local :	restrict nabd socket to local access
+			  -public :	open nabd socket to public access
 			     -log :	show log tails for Pynab daemons
+
+**Note:**  
+By default, rabbit's nabd socket is restricted to local access (from the rabbit itself).  
+Opening it to public access makes it accessible from other hosts. This is a **potential security risk** if the rabbit is not on a local network protected by a firewall.
