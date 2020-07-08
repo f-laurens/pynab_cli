@@ -2,6 +2,8 @@
 # Get/set Tag:tag:tag sound card low/high volume levels
 # ------------------------------
 set_defaults() {
+	SELF=$(basename "${0}")
+
 	MIXER_CONF_FILE="/var/lib/tagtagtag-sound/mixer.conf"
 	MIXER_PID_FILE="/run//tagtagtag-mixerd.pid"
 
@@ -19,7 +21,7 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo "Usage: $(basename ${0}) [-t | -T] [-m low | -M high]"
+	echo "Usage: ${SELF} [-t | -T] [-m low | -M high]"
 	echo "\t no option :\tget sound volume levels"
 	echo "\t\t-h :\tthis usage help"
 	echo "\t\t-t :\thandle volume for Nabaztag"
@@ -42,7 +44,7 @@ get_options() {
 	done
 }
 # ------------------------------
-run_cmd() {
+tagtagtag_sound() {
 	if [ -f "$MIXER_CONF_FILE" ]; then
 		if [ "${MODEL}" = "Nabaztag:tag" ]; then
 			SPEAKER_LOW_KEY="tagtag-speaker-low"; SPEAKER_HIGH_KEY="tagtag-speaker-high"
@@ -55,29 +57,25 @@ run_cmd() {
 		CUR_SPEAKER_LOW=$(grep "^${SPEAKER_LOW_KEY}=" ${MIXER_CONF_FILE} | sed -e "s/${SPEAKER_LOW_KEY}=//")
 		CUR_SPEAKER_HIGH=$(grep "^${SPEAKER_HIGH_KEY}=" ${MIXER_CONF_FILE} | sed -e "s/${SPEAKER_HIGH_KEY}=//")
 
-		if [ -n "${SPEAKER_LOW}" ]; then
-			case ${SPEAKER_LOW} in
-			    ''|*[!0-9]*)
-				echo "Invalid minimum value: ${BOLD}${SPEAKER_LOW}${STD}!"
-				SPEAKER_LOW=${CUR_SPEAKER_LOW} ;;
-			    *)
-				;;
-			esac
-		else
-			SPEAKER_LOW=${CUR_SPEAKER_LOW}
-		fi
+		case ${SPEAKER_LOW} in
+		    *[!0-9]*)
+			echo "Invalid minimum value: ${BOLD}${SPEAKER_LOW}${STD}!"
+			SPEAKER_LOW=${CUR_SPEAKER_LOW} ;;
+		    '')
+			SPEAKER_LOW=${CUR_SPEAKER_LOW} ;;
+		    *)
+			;;
+		esac
 
-		if [ -n "${SPEAKER_HIGH}" ]; then
-			case ${SPEAKER_HIGH} in
-			    ''|*[!0-9]*)
-				echo "Invalid maximum value: ${BOLD}${SPEAKER_HIGH}${STD}!"
-				SPEAKER_HIGH=${CUR_SPEAKER_HIGH} ;;
-			    *)
-				;;
-			esac
-		else
-			SPEAKER_HIGH=${CUR_SPEAKER_HIGH}
-		fi
+		case ${SPEAKER_HIGH} in
+		    *[!0-9]*)
+			echo "Invalid maximum value: ${BOLD}${SPEAKER_HIGH}${STD}!"
+			SPEAKER_HIGH=${CUR_SPEAKER_HIGH} ;;
+		    '')
+			SPEAKER_HIGH=${CUR_SPEAKER_HIGH} ;;
+		    *)
+			;;
+		esac
 
 		if [ "${SPEAKER_LOW}" != "${CUR_SPEAKER_LOW}" ] || [ "${SPEAKER_HIGH}" != "${CUR_SPEAKER_HIGH}" ]; then
 			sudo sed -i -e "s/^${SPEAKER_LOW_KEY}=${CUR_SPEAKER_LOW}/${SPEAKER_LOW_KEY}=${SPEAKER_LOW}/" -e "s/^${SPEAKER_HIGH_KEY}=${CUR_SPEAKER_HIGH}/${SPEAKER_HIGH_KEY}=${SPEAKER_HIGH}/" ${MIXER_CONF_FILE}
@@ -102,13 +100,13 @@ run_cmd() {
 		exit 1
 	fi
 	status=$?
+	return $status
 }
 
 # ------------------------------
 set_defaults
 get_options $*
-run_cmd
+tagtagtag_sound
 # ------------------------------
-exit $status
+exit $?
 #
-

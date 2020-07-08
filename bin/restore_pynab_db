@@ -2,6 +2,8 @@
 # Restore pynab PostgreSQL database
 # ------------------------------
 set_defaults() {
+	SELF=$(basename "${0}")
+
 	# psql option defaults
 	#PSQL_OPTS="-e -E"
 	PSQL_OPTS="-a"
@@ -29,7 +31,7 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo "Usage: $(basename ${0}) [-u DB_USER] [-b DB_BACKUP_FILE]"
+	echo "Usage: ${SELF} [-u DB_USER] [-b DB_BACKUP_FILE]"
 	echo "\tRestore (as user DB_USER) PostgreSQL database from file DB_BACKUP_FILE"
 	echo "\tdefaults: DB_USER=${DB_USER} DB_BACKUP_FILE=${DB_BACKUP}"
 }

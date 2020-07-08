@@ -3,13 +3,15 @@
 # ref: https://github.com/nabaztag2018/pynab/blob/master/PROTOCOL.md
 # ------------------------------
 set_defaults() {
-	SELF="$(basename ${0})"
+	SELF=$(basename "${0}")
+
+	# nc (netcat) option defaults
 	NETCAT_OPTS0="-4 -d -w 1 -v"
 	NETCAT_OPTS2="-4 -w 2 -v"
 	NETCAT_OPTS5="-4 -w 5 -v"
 	NABD_HOST=localhost; NABD_PORT=10543
-	requestor="${SELF}@$(hostname)"
 
+	requestor="${SELF}@$(hostname)"
 	RANDOM=$$; left_pos=$(($RANDOM % 17)); right_pos=$(($RANDOM % 17))
 
 	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
@@ -63,7 +65,7 @@ get_options() {
 	[ -n "$1" ] && HOST="$1"
 }
 # ------------------------------
-run_cmd() {
+nc_nabd() {
 	if [ -z "$PACKET" ]; then
 		if [ -n "$CMD_FILE" ]; then
 			if [ -f "$CMD_FILE" ]; then
@@ -82,12 +84,13 @@ run_cmd() {
 		eval $cmd
 	fi
 	status=$?
+	return $status
 }
 
 # ------------------------------
 set_defaults
 get_options $*
-run_cmd
+nc_nabd
 # ------------------------------
-exit $status
+exit $?
 #

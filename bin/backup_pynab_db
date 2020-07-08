@@ -2,6 +2,8 @@
 # Backup pynab PostgreSQL database
 # ------------------------------
 set_defaults() {
+	SELF=$(basename "${0}")
+
 	# pg_dump option defaults
 	PG_DUMP_OPTS="-F p -C -c --if-exists -v"
 	DB_USER=postgres 
@@ -17,7 +19,7 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo "Usage: $(basename ${0}) [-u DB_USER] [-d DB_NAME] [-b DB_BACKUP_FILE]"
+	echo "Usage: ${SELF} [-u DB_USER] [-d DB_NAME] [-b DB_BACKUP_FILE]"
 	echo "\tBackup (as user DB_USER) PostgreSQL database DB_NAME to file DB_BACKUP_FILE"
 	echo "\tdefaults: DB_USER=${DB_USER} DB_NAME=${DB_NAME} DB_BACKUP_FILE=${DB_BACKUP}"
 }

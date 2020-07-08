@@ -2,8 +2,8 @@
 # Manage Pynab services
 # ------------------------------
 set_defaults() {
-	ARG=${1:-"-status"}
-	SELF="$(basename ${0})"
+	SELF=$(basename "${0}")
+
 	SYSTEMD_DIR="/lib/systemd/system"
 	LOG_DIR="/var/log"
 	LOG_OPTS="-v -n 10"
@@ -46,6 +46,33 @@ usage() {
 	echo "\t   -local :\trestrict nabd socket to local access"
 	echo "\t  -public :\topen nabd socket to public access"
 	echo "\t     -log :\tshow log tails for Pynab daemons"
+}
+# ------------------------------
+get_options() {
+	ARG1=${1:-"-status"}
+
+	case "${ARG1}" in
+	    -star*)
+		CMD="start" ;;
+	    -sto*)
+		CMD="stop" ;;
+	    -stat*)
+		CMD="status" ;;
+	    -r*)
+		CMD="restart" ;;
+	    -loc*)
+		CMD="socket" ; ARG="${NABD_LOCAL_ADDR}" ;;
+	    -p*)
+		CMD="socket" ; ARG="${NABD_PUBLIC_ADDR}" ;;
+	    -log)
+		CMD="log" ;;
+	    -h*)
+		usage
+		exit 0 ;;
+	    *)
+		usage "${ARG1}"
+		exit 42 ;;
+	esac
 }
 # ------------------------------
 stop_services() {
@@ -100,7 +127,7 @@ status_services() {
 		systemctl --quiet is-active ${NABD_SOCKET}
 		if [ $? -eq 0 ]; then
 			echo
-			conf_socket
+			socket_conf
 		fi
 	else
 		status=0
@@ -108,7 +135,7 @@ status_services() {
 	return $status
 }
 # ------------------------------
-conf_socket() {
+socket_conf() {
 	nabd_addr=$1
 	cur_nabd_addr=$(grep "^${NABD_ADDR_KEY}=" ${NABD_SOCKET_CONF} | sed -e "s/${NABD_ADDR_KEY}=//" -e "s/:.*$//")
 	if [ -z "${cur_nabd_addr}" ]; then
@@ -172,34 +199,20 @@ log_services() {
 }
 # ------------------------------
 set_defaults $*
-case "${ARG}" in
-    -star*)
-	start_services
-	exit $? ;;
-    -sto*)
-	stop_services
-	exit $? ;;
-    -stat*)
-	status_services
-	exit $? ;;
-    -r*)
-	stop_services && start_services
-	exit $? ;;
-    -loc*)
-	conf_socket ${NABD_LOCAL_ADDR}
-	exit $? ;;
-    -p*)
-	conf_socket ${NABD_PUBLIC_ADDR}
-	exit $? ;;
-    -log)
-	log_services
-	exit $? ;;
-    -h*)
-	usage
-	exit 0 ;;
-    *)
-	usage "${ARG}"
-	exit 42 ;;
+get_options $*
+case "${CMD}" in
+    start)
+	start_services ;;
+    stop)
+	stop_services ;;
+    status)
+	status_services ;;
+    restart)
+	stop_services && start_services ;;
+    socket)
+	socket_conf ${ARG} ;;
+    log)
+	log_services ;;
 esac
 # ------------------------------
 exit $?
