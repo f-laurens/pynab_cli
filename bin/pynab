@@ -6,7 +6,7 @@ set_defaults() {
 
 	SYSTEMD_DIR="/lib/systemd/system"
 	LOG_DIR="/var/log"
-	LOG_OPTS="-v -n 10"
+	LOG_OPTS="-v"
 	STATUS_OPTS="--no-pager --full"
 
 	# Pynab services to handle
@@ -36,7 +36,7 @@ set_defaults() {
 # ------------------------------
 usage() {
 	[ -n "${1}" ] && echo "${SELF}: illegal option ${1}"
-	echo "Usage: ${SELF} [-status | -start | -stop | -restart | -local | -public | -log]"
+	echo "Usage: ${SELF} [-status | -start | -stop | -restart | -local | -public | -log [NUM]]"
 	echo "\tno option :\tshow status of Pynab services"
 	echo "\t    -help :\tthis usage help"
 	echo "\t   -start :\tstart Pynab services"
@@ -45,11 +45,12 @@ usage() {
 	echo "\t  -status :\tshow status of Pynab services"
 	echo "\t   -local :\trestrict nabd socket to local access"
 	echo "\t  -public :\topen nabd socket to public access"
-	echo "\t     -log :\tshow log tails for Pynab daemons"
+	echo "\t     -log :\tshow log tails (last NUM lines) for Pynab daemons"
 }
 # ------------------------------
 get_options() {
 	ARG1=${1:-"-status"}
+	ARG2=${2:-""}
 
 	case "${ARG1}" in
 	    -star*)
@@ -65,6 +66,16 @@ get_options() {
 	    -p*)
 		CMD="socket" ; ARG="${NABD_PUBLIC_ADDR}" ;;
 	    -log)
+		case ${ARG2} in
+		    *[!0-9]*)
+			echo "Invalid NUM value for '-log': ${BOLD}${ARG2}${STD}!"
+			usage
+			exit 42 ;;
+		    '')
+			ARG=10 ;;
+		    *)
+			ARG=${ARG2} ;;
+		esac
 		CMD="log" ;;
 	    -h*)
 		usage
@@ -184,12 +195,13 @@ socket_conf() {
 }
 # ------------------------------
 log_services() {
+	lines=$1
 	if [ -n "${DAEMON_LOGS}" ]; then
 		echo "Log tails for Pynab daemons:"
-		cmd="tail ${LOG_OPTS} ${DAEMON_LOGS}" ; echo "\n${BOLD}${cmd}${STD}"
+		cmd="tail ${LOG_OPTS} -n ${lines} ${DAEMON_LOGS}" ; echo "\n${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$?
-		cmd="tail ${LOG_OPTS} ${NABD_LOG}" ; echo "\n${BOLD}${cmd}${STD}"
+		cmd="tail ${LOG_OPTS} -n ${lines} ${NABD_LOG}" ; echo "\n${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$?
 	else
@@ -212,7 +224,7 @@ case "${CMD}" in
     socket)
 	socket_conf ${ARG} ;;
     log)
-	log_services ;;
+	log_services ${ARG} ;;
 esac
 # ------------------------------
 exit $?

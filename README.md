@@ -61,7 +61,7 @@ On the other hand restore must be done without concurrent accesses to the databa
 A script to manage Pynab services.
 		
 		pi@Nabaztag:~ $ pynab -h
-		Usage: pynab [-status | -start | -stop | -restart | -local | -public | -log]
+		Usage: pynab [-status | -start | -stop | -restart | -local | -public | -log [NUM]]
 			no option :	show status of Pynab services
 			    -help :	this usage help
 			   -start :	start Pynab services
@@ -70,7 +70,7 @@ A script to manage Pynab services.
 			  -status :	show status of Pynab services
 			   -local :	restrict nabd socket to local access
 			  -public :	open nabd socket to public access
-			     -log :	show log tails for Pynab daemons
+			     -log :	show log tails (last NUM lines) for Pynab daemons
 
 **Note:**  
 By default, rabbit's nabd socket is restricted to local access (from the rabbit itself).  
