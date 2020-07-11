@@ -59,7 +59,7 @@ tagtagtag_sound() {
 
 		case ${SPEAKER_LOW} in
 		    *[!0-9]*)
-			echo "Invalid minimum value: ${BOLD}${SPEAKER_LOW}${STD}!"
+			echo "Invalid minimum value: ${BOLD}'${SPEAKER_LOW}'${STD}!" >&2
 			SPEAKER_LOW=${CUR_SPEAKER_LOW} ;;
 		    '')
 			SPEAKER_LOW=${CUR_SPEAKER_LOW} ;;
@@ -69,7 +69,7 @@ tagtagtag_sound() {
 
 		case ${SPEAKER_HIGH} in
 		    *[!0-9]*)
-			echo "Invalid maximum value: ${BOLD}${SPEAKER_HIGH}${STD}!"
+			echo "Invalid maximum value: ${BOLD}'${SPEAKER_HIGH}'${STD}!" >&2
 			SPEAKER_HIGH=${CUR_SPEAKER_HIGH} ;;
 		    '')
 			SPEAKER_HIGH=${CUR_SPEAKER_HIGH} ;;

@@ -35,7 +35,7 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	[ -n "${1}" ] && echo "${SELF}: illegal option ${1}"
+	[ -n "${1}" ] && echo "Illegal option ${1}" >&2
 	echo "Usage: ${SELF} [-status | -start | -stop | -restart | -local | -public | -log [NUM]]"
 	echo "\tno option :\tshow status of Pynab services"
 	echo "\t    -help :\tthis usage help"
@@ -68,9 +68,8 @@ get_options() {
 	    -log)
 		case ${ARG2} in
 		    *[!0-9]*)
-			echo "Invalid NUM value for '-log': ${BOLD}${ARG2}${STD}!"
-			usage
-			exit 42 ;;
+			echo "Invalid NUM value for '-log': ${BOLD}'${ARG2}'${STD}!" >&2
+			usage; exit 42 ;;
 		    '')
 			ARG=10 ;;
 		    *)
