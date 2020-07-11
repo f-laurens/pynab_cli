@@ -11,16 +11,13 @@ set_defaults() {
 	NETCAT_OPTS5="-4 -w 5 -v"
 	NABD_HOST=localhost; NABD_PORT=10543
 
-	requestor="${SELF}@$(hostname)"
-	RANDOM=$$; left_pos=$(($RANDOM % 17)); right_pos=$(($RANDOM % 17))
+	REQUESTOR="${SELF}@$(hostname)"
 
-	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
-	#EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"request_id\\\": \\\"${requestor}\\\"}"
-	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"event\\\": true, \\\"request_id\\\": \\\"${requestor}\\\"}"
-	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
-	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
-	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
-	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\", \\\"request_id\\\": \\\"${requestor}\\\"}"
+	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
+	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
+	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
+	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
+	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
 	PACKET=""
 	HOST=${NABD_HOST}
 
@@ -33,7 +30,7 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo -e "Usage: ${SELF} [-g | -e | -l | -s |-w | -r | -c COMMANDFILE] [HOST]"
+	echo -e "Usage: ${SELF} [-g | -e | -l | -s | -w | -p LEFT.RIGHT | -r | -c COMMANDFILE] [HOST]"
 	echo -e "\tTalk to rabbit HOST (default: ${NABD_HOST})"
 	echo -e "\t no option :\tget state"
 	echo -e "\t\t-h :\tthis usage help"
@@ -42,27 +39,57 @@ usage() {
 	echo -e "\t\t-l :\texecute LEDs test"
 	echo -e "\t\t-s :\tgo to sleep"
 	echo -e "\t\t-w :\twake up"
+	echo -e "\t\t-p :\trotate ears to position LEFT.RIGHT"
 	echo -e "\t\t-r :\trotate ears to random position"
 	echo -e "\t\t-c :\texecute given JSON COMMANDFILE"
 }
 # ------------------------------
 get_options() {
-	while getopts "gelswrc:h" option
-	do
-		case $option in
-		    g) PACKET=$GESTALT_PACKET ;;
-		    e) PACKET=$TEST_EARS_PACKET ;;
-		    l) PACKET=$TEST_LEDS_PACKET ;;
-		    s) PACKET=$SLEEP_PACKET ;;
-		    w) PACKET=$WAKEUP_PACKET ;;
-		    r) PACKET=$EARS_PACKET ;;
-		    c) CMD_FILE="$OPTARG" ;;
-		    h) usage; exit 0 ;;
-		    \?) usage; exit 42 ;;
-		esac
-	done
+	getopts "gelswp:rc:h" option
+	case $option in
+	    g) PACKET=$GESTALT_PACKET ;;
+	    e) PACKET=$TEST_EARS_PACKET ;;
+	    l) PACKET=$TEST_LEDS_PACKET ;;
+	    s) PACKET=$SLEEP_PACKET ;;
+	    w) PACKET=$WAKEUP_PACKET ;;
+	    p) set_ears_packet "$OPTARG" ; PACKET=$EARS_PACKET ;;
+	    r) set_ears_packet ; PACKET=$EARS_PACKET ;;
+	    c) CMD_FILE="$OPTARG" ;;
+	    h) usage; exit 0 ;;
+	    \?) usage; exit 42 ;;
+	esac
 	shift `expr $OPTIND - 1`
 	[ -n "$1" ] && HOST="$1"
+}
+# ------------------------------
+set_ears_packet() {
+	ears_pos=$1
+	if [ -z "$ears_pos" ]; then
+		RANDOM=$$
+		left_pos=$(($RANDOM % 17)); right_pos=$(($RANDOM % 17))
+	else
+		left_pos=$(echo "$ears_pos" | awk -F. '{print $1}')
+		right_pos=$(echo "$ears_pos" | awk -F. '{print $2}')
+		case ${left_pos} in
+		    ''|*[!0-9]*)
+			echo "Invalid  LEFT value for '-p': ${BOLD}'${left_pos}'${STD}!" >&2
+			ears_pos="" ;;
+		    *)
+			left_pos=$(($left_pos % 17)) ;;
+		esac
+		case ${right_pos} in
+		    ''|*[!0-9]*)
+			echo "Invalid RIGHT value for '-p': ${BOLD}'${right_pos}'${STD}!" >&2
+			ears_pos="" ;;
+		    *)
+			right_pos=$(($right_pos % 17)) ;;
+		esac
+		if [ -z "$ears_pos" ]; then
+			usage; exit 42
+		fi
+	fi
+	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"event\\\": true, \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
+	return 0
 }
 # ------------------------------
 nc_nabd() {
