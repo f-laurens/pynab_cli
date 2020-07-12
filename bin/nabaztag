@@ -85,7 +85,7 @@ set_ears_packet() {
 			right_pos=$(($right_pos % 17)) ;;
 		esac
 		if [ -z "$ears_pos" ]; then
-			usage; exit 42
+			usage; exit 2
 		fi
 	fi
 	EARS_PACKET="{\\\"type\\\": \\\"ears\\\", \\\"left\\\": ${left_pos}, \\\"right\\\": ${right_pos}, \\\"event\\\": true, \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
@@ -96,12 +96,15 @@ nc_nabd() {
 	if [ -z "$PACKET" ]; then
 		if [ -n "$CMD_FILE" ]; then
 			if [ -f "$CMD_FILE" ]; then
-				cmd="cat $CMD_FILE | nc $NETCAT_OPTS5 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
-				eval $cmd
+				cmd_file="$CMD_FILE"
+			elif [ -f "${CMD_FILE}.json" ]; then
+				cmd_file="${CMD_FILE}.json"
 			else
 				echo "${BOLD}JSON command file '$CMD_FILE' not found!${STD}"
 				exit 1
 			fi
+			cmd="cat $cmd_file | nc $NETCAT_OPTS5 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
+			eval $cmd
 		else
 			cmd="nc $NETCAT_OPTS0 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 			eval $cmd
