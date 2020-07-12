@@ -18,7 +18,6 @@ set_defaults() {
 	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
 	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
 	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
-	PACKET=""
 	HOST=${NABD_HOST}
 
 	if [ -t 1 ]; then
@@ -46,18 +45,23 @@ usage() {
 # ------------------------------
 get_options() {
 	getopts "gelswp:rc:h" option
-	case $option in
-	    g) PACKET=$GESTALT_PACKET ;;
-	    e) PACKET=$TEST_EARS_PACKET ;;
-	    l) PACKET=$TEST_LEDS_PACKET ;;
-	    s) PACKET=$SLEEP_PACKET ;;
-	    w) PACKET=$WAKEUP_PACKET ;;
-	    p) set_ears_packet "$OPTARG" ; PACKET=$EARS_PACKET ;;
-	    r) set_ears_packet ; PACKET=$EARS_PACKET ;;
-	    c) CMD_FILE="$OPTARG" ;;
-	    h) usage; exit 0 ;;
-	    \?) usage; exit 42 ;;
-	esac
+	if [ $? -eq 0 ]; then
+		case $option in
+		    g) PACKET=$GESTALT_PACKET ;;
+		    e) PACKET=$TEST_EARS_PACKET ;;
+		    l) PACKET=$TEST_LEDS_PACKET ;;
+		    s) PACKET=$SLEEP_PACKET ;;
+		    w) PACKET=$WAKEUP_PACKET ;;
+		    p) set_ears_packet "$OPTARG" ; PACKET=$EARS_PACKET ;;
+		    r) set_ears_packet ; PACKET=$EARS_PACKET ;;
+		    c) PACKET="" ; CMD_FILE="$OPTARG" ;;
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	else
+		# no option
+		PACKET=""
+	fi
 	shift `expr $OPTIND - 1`
 	[ -n "$1" ] && HOST="$1"
 }
