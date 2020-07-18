@@ -1,0 +1,2 @@
+{"type": "shutdown", "mode": "halt", "request_id": "nabaztag"}
+{"type": "gestalt", "request_id": "nabaztag"}
