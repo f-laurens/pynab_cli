@@ -106,13 +106,26 @@ stop_services() {
 start_services() {
 	if [ -n "${PYNAB_SERVICES}" ]; then
 		echo "Starting Pynab services..."
-		cmd="sudo systemctl start ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
-		eval $cmd
-		status=$? ; [ $status -ne 0 ] && return $status
-		cmd="sudo systemctl start ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
-		eval $cmd
-		status=$? ; [ $status -ne 0 ] && return $status
-		cmd="sudo systemctl start ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		systemctl --quiet is-enabled ${NABD_SOCKET}
+		if [ $? -eq 0 ]; then
+			cmd="sudo systemctl start ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+			status=$? ; [ $status -ne 0 ] && return $status
+		fi
+		systemctl --quiet is-enabled ${NABD_SERVICE}
+		if [ $? -eq 0 ]; then
+			cmd="sudo systemctl start ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+			status=$? ; [ $status -ne 0 ] && return $status
+		fi
+		for service in ${PYNAB_SERVICES}
+		do
+			systemctl --quiet is-enabled ${service}
+			if [ $? -eq 0 ]; then
+				pynab_services="${pynab_services} ${service}"
+			fi
+		done
+		cmd="sudo systemctl start ${pynab_services}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
 	else
