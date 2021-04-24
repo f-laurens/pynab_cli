@@ -179,14 +179,9 @@ socket_conf() {
 		cmd="sudo systemctl daemon-reload" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
-		systemctl --quiet is-active ${NABD_SERVICE}
-		if [ $? -eq 0 ]; then
-			cmd="sudo systemctl stop ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
-			eval $cmd
-			status=$? ; [ $status -ne 0 ] && return $status
-		fi
-		cmd="sudo systemctl try-restart ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
-		eval $cmd
+		stop_services
+		status=$? ; [ $status -ne 0 ] && return $status
+		start_services
 		status=$? ; [ $status -ne 0 ] && return $status
 
 		cmd="systemctl ${STATUS_OPTS} status ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
