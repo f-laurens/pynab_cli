@@ -1,0 +1,100 @@
+#!/bin/sh
+# Wrapper script to update Pynab data models
+# ------------------------------
+set_defaults() {
+	SELF=$(basename "${0}")
+	# Pynab defaults
+	USER=pi
+	PYNAB=${HOME}/pynab
+	MAKE=""
+	MIGRATE=""
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+		RED=`tput setaf 1`; YELLOW=`tput setaf 3`; GREEN=`tput setaf 2`; BLUE=`tput setaf 4`
+	else
+		BOLD=""; STD=""
+		RED=""; YELLOW=""; GREEN=""; BLUE=""
+	fi
+}
+# ------------------------------
+check_user() {
+	if [ "$(id -un)" != "${USER}" ]; then
+		/bin/echo "${RED}${SELF} must be run as user ${USER}.${STD}"
+		exit 1
+	fi
+
+	if [ ! -d "${PYNAB}" ]; then
+		/bin/echo "${RED}Pynab repository '${PYNAB}' not found!${STD}"
+		exit 42
+	fi
+}
+# ------------------------------
+usage() {
+	/bin/echo "Usage: ${SELF} [-c] [-m]"
+	/bin/echo -e "\tCreate new (if -c) and Execute (if -m) Pynab data models migrations"
+}
+# ------------------------------
+get_options() {
+	while getopts "cmh" option
+	do
+		case $option in
+		    c) MAKE="make" ;;
+		    m) MIGRATE="migrate" ;;
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+	shift `expr $OPTIND - 1`
+}
+# ------------------------------
+make_migrations() {
+	opts=""
+	update=$1
+	if [ "${update}" != "make" ]; then
+		/bin/echo -e "${YELLOW}Not creating Pynab data models migrations...${STD}\n"
+		return 0
+	fi
+	/bin/echo "${BLUE}Creating Pynab data models migrations...${STD}"
+	status=0
+	cd ${PYNAB}
+	cmd="${PYNAB}/venv/bin/python manage.py makemigrations ${opts}" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	if [ $status -ne 0 ]; then
+		/bin/echo "${RED}makemigrations failed! Aborting...${STD}"
+		exit $status
+	fi
+	return $status
+}
+# ------------------------------
+migrate() {
+	opts=""
+	update=$1
+	if [ "${update}" != "migrate" ]; then
+		/bin/echo -e "${YELLOW}Not running Pynab data models migrations...${STD}\n"
+		return 0
+	fi
+	/bin/echo "${BLUE}Running Pynab data models migrations...${STD}"
+	status=0
+	cd ${PYNAB}
+	cmd="${PYNAB}/venv/bin/python manage.py migrate ${opts}" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	if [ $status -ne 0 ]; then
+		/bin/echo "${RED}migrate failed! Aborting...${STD}"
+		exit $status
+	fi
+	return $status
+}
+# ------------------------------
+set_defaults
+check_user
+get_options $*
+make_migrations ${MAKE}
+migrate ${MIGRATE}
+# ------------------------------
+exit $?
+#

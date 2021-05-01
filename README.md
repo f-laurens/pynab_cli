@@ -52,7 +52,7 @@ Scripts to backup and restore the rabbit's Pynab PostgreSQL database.
 		Usage: restore_pynab_db [-u DB_USER] [-b DB_BACKUP_FILE]
 			Restore (as user DB_USER) PostgreSQL database from file DB_BACKUP_FILE
 			defaults: DB_USER=postgres DB_BACKUP_FILE=pynab.db.sql
-			
+
 **Note:**  
 Backup can be done on the fly (while the rabbit's Pynab services are running). According to PostgreSQL documentation, the backup is consistent (based on a 'snapshot' of the database).  
 On the other hand restore must be done without concurrent accesses to the database (so that it can be re-created). Pynab services must therefore be stopped beforehand and restarted after the backup (the script takes care of this).
@@ -76,3 +76,41 @@ A script to manage Pynab services.
 **Note:**  
 By default, rabbit's nabd socket is restricted to local access (from the rabbit itself).  
 Opening it to public access makes it accessible from other hosts. This is a **potential security risk** if the rabbit is not on a local network protected by a firewall.
+
+## Miscellaneous administration
+
+A collection of wrapper scripts for Pynab administration:
+- update_pynab_messages
+
+		pi@Bunny:~ $ update_pynab_messages -h
+		Usage: update_pynab_messages [-m] [-c] [MODULE...]
+			Make (if -m) and Compile (if -c) localisation messages for Pynab modules MODULE...
+			defaults: MODULES='nab?*d nabweb'
+- migrate_pynab_models
+
+		pi@Bunny:~ $ migrate_pynab_models -h
+		Usage: migrate_pynab_models [-c] [-m]
+			Create new (if -c) and Execute (if -m) Pynab data models migrations
+- django_admin_pynab
+
+		pi@Bunny:~ $ django_admin_pynab  -h
+		Usage: django_admin_pynab [COMMAND ARGS...]
+			Execute django-admin script for Pynab
+- rebuild_pynab_drivers
+
+		pi@Bunny:~ $ rebuild_pynab_drivers -h
+		Usage: rebuild_pynab_drivers [-f]
+			Rebuild (if -f) TagTagTag drivers for Pynab
+- upgrade_pynab
+
+		pi@Bunny:~ $ upgrade_pynab -h
+		Usage: upgrade_pynab [-u]
+			Run (if -u) Pynab upgrade script
+- install_pynab
+
+		pi@Bunny:~ $ install_pynab -h
+		Usage: install_pynab [-i] [-u]
+			Run (if -i) Pynab install script (in upgrade mode if -u)
+
+**Note:**  
+These should be used with caution (**only knowingly**).

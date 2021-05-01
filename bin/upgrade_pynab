@@ -1,0 +1,78 @@
+#!/bin/sh
+# Wrapper script to upgrade Pynab
+# ------------------------------
+set_defaults() {
+	SELF=$(basename "${0}")
+	# Pynab defaults
+	USER=pi
+	PYNAB=${HOME}/pynab
+	UPGRADE=""
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+		RED=`tput setaf 1`; YELLOW=`tput setaf 3`; GREEN=`tput setaf 2`; BLUE=`tput setaf 4`
+	else
+		BOLD=""; STD=""
+		RED=""; YELLOW=""; GREEN=""; BLUE=""
+	fi
+}
+# ------------------------------
+check_user() {
+	if [ "$(id -un)" != "${USER}" ]; then
+		/bin/echo "${RED}${SELF} must be run as user ${USER}.${STD}"
+		exit 1
+	fi
+
+	if [ ! -d "${PYNAB}" ]; then
+		/bin/echo "${RED}Pynab repository '${PYNAB}' not found!${STD}"
+		exit 42
+	fi
+}
+# ------------------------------
+usage() {
+	/bin/echo "Usage: ${SELF} [-u]"
+	/bin/echo -e "\tRun (if -u) Pynab upgrade script"
+}
+# ------------------------------
+get_options() {
+	while getopts "uh" option
+	do
+		case $option in
+		    u) UPGRADE="upgrade" ;;
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+	shift `expr $OPTIND - 1`
+}
+# ------------------------------
+upgrade_pynab() {
+	mode=""
+	upgrade=$1
+	if [ "${upgrade}" != "upgrade" ]; then
+		/bin/echo -e "${YELLOW}Not upgrading Pynab...${STD}\n"
+		usage
+		return 0
+	fi
+	/bin/echo "${BLUE}Upgrading Pynab...${STD}"
+	status=0
+	cd ${PYNAB}
+	cmd="${PYNAB}/upgrade.sh ${mode}" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	if [ $status -ne 0 ]; then
+		/bin/echo "${RED}Pynab upgrade failed!${STD}"
+		exit $status
+	fi
+	return $status
+}
+# ------------------------------
+set_defaults
+check_user
+get_options $*
+upgrade_pynab ${UPGRADE}
+# ------------------------------
+exit $?
+#

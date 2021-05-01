@@ -1,0 +1,119 @@
+#!/bin/sh
+# Wrapper script to update Pynab localisation messages
+# ------------------------------
+set_defaults() {
+	SELF=$(basename "${0}")
+	# Pynab defaults
+	USER=pi
+	PYNAB=${HOME}/pynab
+	MODULE_LIST='nab?*d nabweb'
+	MAKE=""
+	COMPILE=""
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+		RED=`tput setaf 1`; YELLOW=`tput setaf 3`; GREEN=`tput setaf 2`; BLUE=`tput setaf 4`
+	else
+		BOLD=""; STD=""
+		RED=""; YELLOW=""; GREEN=""; BLUE=""
+	fi
+}
+# ------------------------------
+check_user() {
+	if [ "$(id -un)" != "${USER}" ]; then
+		/bin/echo "${RED}${SELF} must be run as user ${USER}.${STD}"
+		exit 1
+	fi
+
+	if [ ! -d "${PYNAB}" ]; then
+		/bin/echo "${RED}Pynab repository '${PYNAB}' not found!${STD}"
+		exit 42
+	fi
+}
+# ------------------------------
+usage() {
+	/bin/echo "Usage: ${SELF} [-m] [-c] [MODULE...]"
+	/bin/echo -e "\tMake (if -m) and Compile (if -c) localisation messages for Pynab modules MODULE..."
+	/bin/echo -e "\tdefaults: MODULES='${MODULE_LIST}'"
+}
+# ------------------------------
+get_options() {
+	while getopts "mch" option
+	do
+		case $option in
+		    m) MAKE="make" ;;
+		    c) COMPILE="compile" ;;
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+	shift `expr $OPTIND - 1`
+	[ -n "$*" ] && MODULE_LIST="$*"
+}
+# ------------------------------
+make_messages() {
+	opts=""
+	update=$1
+	if [ "${update}" != "make" ]; then
+		/bin/echo -e "${YELLOW}Not updating Pynab localisation messages...${STD}\n"
+		return 0
+	fi
+	/bin/echo "${BLUE}Updating Pynab localisation messages...${STD}"
+	status=0
+	cd ${PYNAB}
+	for module in ${MODULE_LIST}; do
+		if [ -d "${PYNAB}/${module}/locale" ]; then
+			/bin/echo -e "\n${module}: ${opts}"
+			cd "${PYNAB}/${module}"
+			cmd="${PYNAB}/venv/bin/django-admin makemessages ${opts}" ; /bin/echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+			status=$?
+			if [ $status -ne 0 ]; then
+				/bin/echo "${RED}makemessages failed! Aborting...${STD}"
+				exit $status
+			fi
+		else
+			/bin/echo -e "\n${YELLOW}No locale for ${module}...${STD}"
+		fi
+	done
+	return $status
+}
+# ------------------------------
+compile_messages() {
+	opts=""
+	update=$1
+	if [ "${update}" != "compile" ]; then
+		/bin/echo -e "${YELLOW}Not compiling Pynab localisation messages...${STD}\n"
+		return 0
+	fi
+	/bin/echo "${BLUE}Compiling Pynab localisation messages...${STD}"
+	status=0
+	cd ${PYNAB}
+	for module in ${MODULE_LIST}; do
+		if [ -d "${PYNAB}/${module}/locale" ]; then
+			/bin/echo -e "\n${module}: ${opts}"
+			cd "${PYNAB}/${module}"
+			cmd="${PYNAB}/venv/bin/django-admin compilemessages ${opts}" ; /bin/echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+			status=$?
+			if [ $status -ne 0 ]; then
+				/bin/echo "${RED}compilemessages failed! Aborting...${STD}"
+				exit $status
+			fi
+		else
+			/bin/echo -e "\n${YELLOW}No locale for ${module}...${STD}"
+		fi
+	done
+	return $status
+}
+# ------------------------------
+set_defaults
+check_user
+get_options $*
+make_messages ${MAKE}
+compile_messages ${COMPILE}
+# ------------------------------
+exit $?
+#

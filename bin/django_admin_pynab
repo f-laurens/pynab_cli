@@ -1,0 +1,68 @@
+#!/bin/sh
+# Wrapper django-admin script for Pynab
+# ------------------------------
+set_defaults() {
+	SELF=$(basename "${0}")
+	# Pynab defaults
+	USER=pi
+	PYNAB=${HOME}/pynab
+	CMD_ARGS=""
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+		RED=`tput setaf 1`; YELLOW=`tput setaf 3`; GREEN=`tput setaf 2`; BLUE=`tput setaf 4`
+	else
+		BOLD=""; STD=""
+		RED=""; YELLOW=""; GREEN=""; BLUE=""
+	fi
+}
+# ------------------------------
+check_user() {
+	if [ "$(id -un)" != "${USER}" ]; then
+		/bin/echo "${RED}${SELF} must be run as user ${USER}.${STD}"
+		exit 1
+	fi
+
+	if [ ! -d "${PYNAB}" ]; then
+		/bin/echo "${RED}Pynab repository '${PYNAB}' not found!${STD}"
+		exit 42
+	fi
+}
+# ------------------------------
+usage() {
+	/bin/echo "Usage: ${SELF} [COMMAND ARGS...]"
+	/bin/echo -e "\tExecute django-admin script for Pynab"
+}
+# ------------------------------
+get_options() {
+	while getopts "h" option
+	do
+		case $option in
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+	shift `expr $OPTIND - 1`
+	CMD_ARGS="$*"
+}
+# ------------------------------
+django_admin() {
+	cmd_args=$*
+	/bin/echo "${BLUE}Pynab django-admin ${cmd_args}...${STD}"
+	status=0
+	cd ${PYNAB}
+	cmd="${PYNAB}/venv/bin/python manage.py ${cmd_args}" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	return $status
+}
+# ------------------------------
+set_defaults
+check_user
+get_options $*
+django_admin ${CMD_ARGS}
+# ------------------------------
+exit $?
+#
