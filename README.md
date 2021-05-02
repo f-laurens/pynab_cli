@@ -1,4 +1,4 @@
-# [pynab_cli](https://github.com/f-laurens/pynab_cli/archive/master.zip)
+# [pynab_cli](https://github.com/f-laurens/pynab_cli/archive/release.zip)
 
 A collection of small command line tools for [Pynab](https://github.com/nabaztag2018/pynab)-running Nabaztag rabbits that have been revived using the [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w)-powered [Tag:tag:tag](https://www.tagtagtag.fr/index_eng.html) card.
 
