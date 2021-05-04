@@ -7,6 +7,7 @@ set_defaults() {
 	USER=pi
 	PYNAB=${HOME}/pynab
 	MODULE_LIST='nab?*d nabweb'
+	LOCALES="-l en_US -l en_GB -l fr_FR -l it_IT -l es_ES -l pt_BR -l de_DE -l ja_jP"
 	MAKE=""
 	COMPILE=""
 
@@ -67,7 +68,7 @@ make_messages() {
 		if [ -d "${PYNAB}/${module}/locale" ]; then
 			/bin/echo -e "\n${module}: ${opts}"
 			cd "${PYNAB}/${module}"
-			cmd="${PYNAB}/venv/bin/django-admin makemessages ${opts}" ; /bin/echo "${BOLD}${cmd}${STD}"
+			cmd="${PYNAB}/venv/bin/django-admin makemessages ${opts} ${LOCALES}" ; /bin/echo "${BOLD}${cmd}${STD}"
 			eval $cmd
 			status=$?
 			if [ $status -ne 0 ]; then
@@ -95,7 +96,7 @@ compile_messages() {
 		if [ -d "${PYNAB}/${module}/locale" ]; then
 			/bin/echo -e "\n${module}: ${opts}"
 			cd "${PYNAB}/${module}"
-			cmd="${PYNAB}/venv/bin/django-admin compilemessages ${opts}" ; /bin/echo "${BOLD}${cmd}${STD}"
+			cmd="${PYNAB}/venv/bin/django-admin compilemessages ${opts} ${LOCALES}" ; /bin/echo "${BOLD}${cmd}${STD}"
 			eval $cmd
 			status=$?
 			if [ $status -ne 0 ]; then
