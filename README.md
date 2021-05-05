@@ -111,6 +111,12 @@ A collection of wrapper scripts for Pynab administration:
 		pi@Bunny:~ $ install_pynab -h
 		Usage: install_pynab [-i] [-u]
 			Run (if -i) Pynab install script (in upgrade mode if -u)
+- check_pynab_syntax
 
+		pi@Bunny:~ $ check_pynab_syntax -h
+		Usage: check_pynab_syntax [-p] [-f] [-b] [-i] [MODULE...]
+			Run Python syntax checkers on Pynab modules MODULE...
+			-p : run pycodestyle   -f : run flake8   -b : run black   -i : run isort
+			defaults: MODULES='nabcommon nabd nab?*d nabweb'
 **Note:**  
 These should be used with caution (**only knowingly**).
