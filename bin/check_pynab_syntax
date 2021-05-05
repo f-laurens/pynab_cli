@@ -1,0 +1,154 @@
+#!/bin/sh
+# Wrapper script to run  Python syntax checkers on Pynab code
+# ------------------------------
+set_defaults() {
+	SELF=$(basename "${0}")
+	# Pynab defaults
+	USER=pi
+	PYNAB=${HOME}/pynab
+	PYCODESTYLE_OPTS="--ignore=E121,E123,E126,E226,E24,E704,W503,W504,E203"
+	FLAKE8_OPTS="--extend-ignore=E203"
+	BLACK_OPTS="-l 79"
+	ISORT_OPTS="-l 79 --profile black --indent 4"
+	MODULE_LIST='nabcommon nabd nab?*d nabweb'
+	PYCODESTYLE=""
+	FLAKE8=""
+	BLACK=""
+	ISORT=""
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+		RED=`tput setaf 1`; YELLOW=`tput setaf 3`; GREEN=`tput setaf 2`; BLUE=`tput setaf 4`
+	else
+		BOLD=""; STD=""
+		RED=""; YELLOW=""; GREEN=""; BLUE=""
+	fi
+}
+# ------------------------------
+check_user() {
+	if [ "$(id -un)" != "${USER}" ]; then
+		/bin/echo "${RED}${SELF} must be run as user ${USER}.${STD}"
+		exit 1
+	fi
+
+	if [ ! -d "${PYNAB}" ]; then
+		/bin/echo "${RED}Pynab repository '${PYNAB}' not found!${STD}"
+		exit 42
+	fi
+}
+# ------------------------------
+usage() {
+	/bin/echo "Usage: ${SELF} [-p] [-f] [-b] [-i] [MODULE...]"
+	/bin/echo -e "\tRun Python syntax checkers on Pynab modules MODULE..."
+	/bin/echo -e "\t-p : run pycodestyle   -f : run flake8   -b : run black   -i : run isort"
+	/bin/echo -e "\tdefaults: MODULES='${MODULE_LIST}'"
+}
+# ------------------------------
+get_options() {
+	while getopts "pfbih" option
+	do
+		case $option in
+		    p) PYCODESTYLE="pycodestyle " ;;
+		    f) FLAKE8="flake8" ;;
+		    b) BLACK="black" ;;
+		    i) ISORT="isort" ;;
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+	shift `expr $OPTIND - 1`
+	[ -n "$*" ] && MODULE_LIST="$*"
+}
+# ------------------------------
+run_pycodestyle() {
+	action=$1
+	if [ "${action}" != "pycodestyle" ]; then
+		/bin/echo -e "${YELLOW}Not running pycodestyle checks on Pynab modules ${MODULE_LIST}...${STD}\n"
+		return 0
+	fi
+	/bin/echo "${BLUE}Running pycodestyle checks on Pynab modules ${MODULE_LIST}...${STD}"
+	status=0
+	cd ${PYNAB}
+	cmd="${PYNAB}/venv/bin/pycodestyle ${PYCODESTYLE_OPTS} ${MODULE_LIST}" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	if [ $status -eq 0 ]; then
+	 	/bin/echo -e "${GREEN}pycodestyle check passed.${STD}\n"
+	else
+	 	/bin/echo -e "${RED}pycodestyle check failed!${STD}\n"
+	fi
+	return $status
+}
+# ------------------------------
+run_flake8() {
+	action=$1
+	if [ "${action}" != "flake8" ]; then
+		/bin/echo -e "${YELLOW}Not running flake8 checks on Pynab modules ${MODULE_LIST}...${STD}\n"
+		return 0
+	fi
+	/bin/echo "${BLUE}Running flake8 checks on Pynab modules ${MODULE_LIST}...${STD}"
+	status=0
+	cd ${PYNAB}
+	cmd="${PYNAB}/venv/bin/flake8 ${FLAKE8_OPTS} ${MODULE_LIST}" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	if [ $status -eq 0 ]; then
+	 	/bin/echo -e "${GREEN}flake8 check passed.${STD}\n"
+	else
+	 	/bin/echo -e "${RED}flake8 check failed!${STD}\n"
+	fi
+	return $status
+}
+# ------------------------------
+run_black() {
+	action=$1
+	if [ "${action}" != "black" ]; then
+		/bin/echo -e "${YELLOW}Not running black checks on Pynab modules ${MODULE_LIST}...${STD}\n"
+		return 0
+	fi
+	/bin/echo "${BLUE}Running black checks on Pynab modules ${MODULE_LIST}...${STD}"
+	status=0
+	cd ${PYNAB}
+	cmd="${PYNAB}/venv/bin/black ${BLACK_OPTS} ${MODULE_LIST}" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	if [ $status -eq 0 ]; then
+	 	/bin/echo -e "${GREEN}black check passed.${STD}\n"
+	else
+	 	/bin/echo -e "${RED}black check failed!${STD}\n"
+	fi
+	return $status
+}
+# ------------------------------
+run_isort() {
+	action=$1
+	if [ "${action}" != "isort" ]; then
+		/bin/echo -e "${YELLOW}Not running isort checks on Pynab modules ${MODULE_LIST}...${STD}\n"
+		return 0
+	fi
+	/bin/echo "${BLUE}Running isort checks on Pynab modules ${MODULE_LIST}...${STD}"
+	status=0
+	cd ${PYNAB}
+	cmd="${PYNAB}/venv/bin/isort ${ISORT_OPTS} ${MODULE_LIST}" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	if [ $status -eq 0 ]; then
+	 	/bin/echo -e "${GREEN}isort check passed.${STD}\n"
+	else
+	 	/bin/echo -e "${RED}isort check failed!${STD}\n"
+	fi
+	return $status
+}
+# ------------------------------
+set_defaults
+check_user
+get_options $*
+run_pycodestyle ${PYCODESTYLE}
+run_flake8 ${FLAKE8}
+run_black ${BLACK}
+run_isort ${ISORT}
+# ------------------------------
+exit $?
+#
