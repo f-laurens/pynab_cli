@@ -78,7 +78,7 @@ build_driver() {
 		cd ${driver}
 		cmd="/usr/bin/git pull -v" ; /bin/echo "${BOLD}${cmd}${STD}"
 		eval $cmd
-		cmd="/usr/bin/make clean && /usr/bin/make && /usr/bin/sudo /usr/bin/make install" ; /bin/echo "${BOLD}${cmd}${STD}"
+		cmd="/usr/bin/make clean && /usr/bin/make && /usr/bin/sudo /usr/bin/make install && /usr/bin/make clean" ; /bin/echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$?
 	else
