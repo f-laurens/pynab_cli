@@ -118,5 +118,6 @@ A collection of wrapper scripts for Pynab administration:
 			Run Python syntax checkers on Pynab modules MODULE...
 			-p : run pycodestyle   -f : run flake8   -b : run black   -i : run isort
 			defaults: MODULES='nabcommon nabd nab?*d nabweb'
+
 **Note:**  
 These should be used with caution (**only knowingly**).
