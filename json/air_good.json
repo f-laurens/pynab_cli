@@ -1,0 +1,2 @@
+{"type":"info", "request_id": "air_good", "info_id" : "air_info", "animation": {"tempo":42,"colors":[ {"left":"00ffff","center":"00ffff","right":"00ffff"}, {"left":"00ffff","center":"00ffff","right":"00ffff"}, {"left":"00ffff","center":"00ffff","right":"00ffff"}, {"left":"000000","center":"000000","right":"000000"}]}}
+{"type": "gestalt", "request_id": "nabaztag"}
