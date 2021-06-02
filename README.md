@@ -114,10 +114,10 @@ A collection of wrapper scripts for Pynab administration:
 - check_pynab_syntax
 
 		pi@Bunny:~ $ check_pynab_syntax -h
-		Usage: check_pynab_syntax [-p] [-f] [-b] [-i] [MODULE...]
+		Usage: check_pynab_syntax [-b] [-p] [-f] [-i] [MODULE...]
 			Run Python syntax checkers on Pynab modules MODULE...
-			-p : run pycodestyle   -f : run flake8   -b : run black   -i : run isort
-			defaults: MODULES='nabcommon nabd nab?*d nabweb'
+			-b : run black   -p : run pycodestyle   -f : run flake8   -i : run isort
+			defaults: MODULES='nabcommon nabboot nabd nab?*d nabweb'
 
 **Note:**  
 These should be used with caution (**only knowingly**).
