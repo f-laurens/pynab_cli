@@ -23,8 +23,15 @@ set_defaults() {
 	if [ -t 1 ]; then
 		# Text attributes
 		BOLD=`tput bold`; STD=`tput sgr0`
+		RED=`tput setaf 1`; YELLOW=`tput setaf 3`; GREEN=`tput setaf 2`; BLUE=`tput setaf 4`
 	else
 		BOLD=""; STD=""
+		RED=""; YELLOW=""; GREEN=""; BLUE=""
+	fi
+
+	if [ "$(which nc)" == "" ]; then
+		echo "${RED}nc command not available${STD} - please install ${BOLD}netcat-openbsd${STD} package."
+		exit 3
 	fi
 }
 # ------------------------------
@@ -76,14 +83,14 @@ set_ears_packet() {
 		right_pos=$(echo "$ears_pos" | awk -F. '{print $2}')
 		case ${left_pos} in
 		    ''|*[!0-9]*)
-			echo "Invalid  LEFT value for '-p': ${BOLD}'${left_pos}'${STD}!" >&2
+			echo "${RED}Invalid  LEFT value for '-p': ${BOLD}'${left_pos}'${STD}${RED}!${STD}" >&2
 			ears_pos="" ;;
 		    *)
 			left_pos=$(($left_pos % 17)) ;;
 		esac
 		case ${right_pos} in
 		    ''|*[!0-9]*)
-			echo "Invalid RIGHT value for '-p': ${BOLD}'${right_pos}'${STD}!" >&2
+			echo "${RED}Invalid RIGHT value for '-p': ${BOLD}'${right_pos}'${STD}${RED}!${STD}" >&2
 			ears_pos="" ;;
 		    *)
 			right_pos=$(($right_pos % 17)) ;;
@@ -104,7 +111,7 @@ nc_nabd() {
 			elif [ -f "${CMD_FILE}.json" ]; then
 				cmd_file="${CMD_FILE}.json"
 			else
-				echo "${BOLD}JSON command file '$CMD_FILE' not found!${STD}"
+				echo "${RED}JSON command file '$CMD_FILE' not found!${STD}"
 				exit 1
 			fi
 			cmd="cat $cmd_file | nc $NETCAT_OPTS5 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
