@@ -3,9 +3,9 @@
 # ------------------------------
 set_defaults() {
 	SELF=$(basename "${0}")
-	# Pynab defaults
-	USER=pi
-	PYNAB=${HOME}/pynab
+	systemd_dir="/lib/systemd/system"
+	nabd_service=${systemd_dir}/nabd.service
+	PYNAB=$(sed -nE -e 's|WorkingDirectory=(.+)|\1|p' ${nabd_service} 2>/dev/null)
 	UPGRADE=""
 
 	if [ -t 1 ]
@@ -19,15 +19,16 @@ set_defaults() {
 	fi
 }
 # ------------------------------
-check_user() {
-	if [ "$(id -un)" != "${USER}" ]; then
-		/bin/echo "${RED}${SELF} must be run as user ${USER}.${STD}"
-		exit 1
+check_pynab() {
+	if [ ! -d "${PYNAB}" ]; then
+		/bin/echo "${RED}Cannot locate Pynab repository!${STD}"
+		exit 42
 	fi
 
-	if [ ! -d "${PYNAB}" ]; then
-		/bin/echo "${RED}Pynab repository '${PYNAB}' not found!${STD}"
-		exit 42
+        owner=`stat -c '%U' ${PYNAB}`
+	if [ "$(id -un)" != "${owner}" ]; then
+		/bin/echo "${RED}${SELF} must be run as user ${owner}.${STD}"
+		exit 1
 	fi
 }
 # ------------------------------
@@ -70,7 +71,7 @@ upgrade_pynab() {
 }
 # ------------------------------
 set_defaults
-check_user
+check_pynab
 get_options $*
 upgrade_pynab ${UPGRADE}
 # ------------------------------

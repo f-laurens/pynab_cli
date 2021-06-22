@@ -4,8 +4,10 @@
 set_defaults() {
 	SELF=$(basename "${0}")
 	# Pynab defaults
-	USER=pi
-	PYNAB=${HOME}/pynab
+	systemd_dir="/lib/systemd/system"
+	nabd_service=${systemd_dir}/nabd.service
+	PYNAB=$(sed -nE -e 's|WorkingDirectory=(.+)|\1|p' ${nabd_service} 2>/dev/null)
+
 	REBUILD=""
 
 	if [ -t 1 ]
@@ -19,15 +21,18 @@ set_defaults() {
 	fi
 }
 # ------------------------------
-check_user() {
-	if [ "$(id -un)" != "${USER}" ]; then
-		/bin/echo "${RED}${SELF} must be run as user ${USER}.${STD}"
-		exit 1
+check_pynab() {
+	if [ ! -d "${PYNAB}" ]; then
+		/bin/echo "${RED}Cannot locate Pynab repository!${STD}"
+		exit 42
+	else
+		ROOT=$(dirname ${PYNAB})
 	fi
 
-	if [ ! -d "${PYNAB}" ]; then
-		/bin/echo "${RED}Pynab repository '${PYNAB}' not found!${STD}"
-		exit 42
+        owner=`stat -c '%U' ${PYNAB}`
+	if [ "$(id -un)" != "${owner}" ]; then
+		/bin/echo "${RED}${SELF} must be run as user ${owner}.${STD}"
+		exit 1
 	fi
 }
 # ------------------------------
@@ -69,7 +74,7 @@ build_driver() {
 	driver=$1
 	driver_type=$2
 	/bin/echo -e "\n${BLUE}${driver_type} driver...${STD}"
-	cd ${HOME}
+	cd ${ROOT}
 	if [ ! -d "${driver}" ]; then
 		cmd="/usr/bin/git clone https://github.com/pguyot/${driver}" ; /bin/echo "${BOLD}${cmd}${STD}"
 		eval $cmd
@@ -92,14 +97,14 @@ build_driver() {
 }
 # ------------------------------
 reboot_after_build() {
-	cd ${HOME}
+	cd ${ROOT}
 	/bin/echo -e "\n${RED}Rebooting...${STD}"
 	cmd="/usr/bin/sudo /bin/systemctl reboot" ; /bin/echo "${BOLD}${cmd}${STD}"
 	eval $cmd
 }
 # ------------------------------
 set_defaults
-check_user
+check_pynab
 get_options $*
 check_rebuild ${REBUILD}
 
