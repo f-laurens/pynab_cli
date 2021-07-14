@@ -6,10 +6,11 @@ set_defaults() {
 	SELF=$(basename "${0}")
 
 	# nc (netcat) option defaults
-	NETCAT_OPTS0="-4 -d -w 1 -v"
+	NETCAT_OPTS1="-4 -d -w 1 -v"
 	NETCAT_OPTS2="-4 -w 2 -v"
 	NETCAT_OPTS5="-4 -w 5 -v"
 	NABD_HOST=localhost; NABD_PORT=10543
+	VIRTUAL_NABD=""; VIRTUAL_NABD_PORT=10544
 
 	REQUESTOR="${SELF}@$(hostname)"
 
@@ -36,7 +37,7 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo -e "Usage: ${SELF} [-g | -e | -l | -s | -w | -p LEFT.RIGHT | -r | -c COMMANDFILE] [HOST]"
+	echo -e "Usage: ${SELF} [-g | -e | -l | -s | -w | -p LEFT.RIGHT | -r | -v | -c COMMANDFILE] [HOST]"
 	echo -e "\tTalk to rabbit HOST (default: ${NABD_HOST})"
 	echo -e "\t no option :\tget state"
 	echo -e "\t\t-h :\tthis usage help"
@@ -47,11 +48,12 @@ usage() {
 	echo -e "\t\t-w :\twake up"
 	echo -e "\t\t-p :\trotate ears to position LEFT.RIGHT"
 	echo -e "\t\t-r :\trotate ears to random position"
+	echo -e "\t\t-v :\tdisplay virtual rabbit (running in Docker on HOST)"
 	echo -e "\t\t-c :\texecute given JSON COMMANDFILE"
 }
 # ------------------------------
 get_options() {
-	getopts "gelswp:rc:h" option
+	getopts "gelswp:rvc:h" option
 	if [ $? -eq 0 ]; then
 		case $option in
 		    g) PACKET=$GESTALT_PACKET ;;
@@ -61,6 +63,7 @@ get_options() {
 		    w) PACKET=$WAKEUP_PACKET ;;
 		    p) set_ears_packet "$OPTARG" ; PACKET=$EARS_PACKET ;;
 		    r) set_ears_packet ; PACKET=$EARS_PACKET ;;
+		    v) PACKET="" ; VIRTUAL_NABD="Docker" ;;
 		    c) PACKET="" ; CMD_FILE="$OPTARG" ;;
 		    h) usage; exit 0 ;;
 		    \?) usage; exit 42 ;;
@@ -116,8 +119,11 @@ nc_nabd() {
 			fi
 			cmd="cat $cmd_file | nc $NETCAT_OPTS5 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 			eval $cmd
+		elif [ -n "$VIRTUAL_NABD" ]; then
+			cmd="nc $NETCAT_OPTS1 $HOST $VIRTUAL_NABD_PORT"; echo "${BOLD}${cmd}${STD}"
+			eval $cmd
 		else
-			cmd="nc $NETCAT_OPTS0 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
+			cmd="nc $NETCAT_OPTS1 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 			eval $cmd
 		fi
 	else
