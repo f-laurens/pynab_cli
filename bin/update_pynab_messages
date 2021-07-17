@@ -74,6 +74,8 @@ make_messages() {
 			cmd="${PYNAB}/venv/bin/django-admin makemessages ${opts} ${LOCALES}" ; /bin/echo "${BOLD}${cmd}${STD}"
 			eval $cmd
 			status=$?
+			cmd="git clean -f -d ${PYNAB}/${module}/locale" ; /bin/echo "${BOLD}${cmd}${STD}"
+			eval $cmd
 			if [ $status -ne 0 ]; then
 				/bin/echo "${RED}makemessages failed! Aborting...${STD}"
 				exit $status
