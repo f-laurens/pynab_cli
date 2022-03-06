@@ -83,9 +83,14 @@ build_driver() {
 		cd ${driver}
 		cmd="/usr/bin/git pull -v" ; /bin/echo "${BOLD}${cmd}${STD}"
 		eval $cmd
-		cmd="/usr/bin/make clean && /usr/bin/make && /usr/bin/sudo /usr/bin/make install && /usr/bin/make clean" ; /bin/echo "${BOLD}${cmd}${STD}"
-		eval $cmd
-		status=$?
+		for dir in /lib/modules/*/build
+		do
+			kernel=$(basename $(dirname ${dir}))
+			echo "${BLUE}Building ${driver} driver for kernel ${kernel}.${STD}"
+			cmd="/usr/bin/make KERNELRELEASE=${kernel} clean && /usr/bin/make KERNELRELEASE=${kernel} && /usr/bin/sudo /usr/bin/make KERNELRELEASE=${kernel} install && /usr/bin/make KERNELRELEASE=${kernel} clean" ; /bin/echo "${BOLD}${cmd}${STD}"
+			eval $cmd
+			status=$? ; [ $status -ne 0 ] && break
+		done
 	else
 		status=42
 	fi
