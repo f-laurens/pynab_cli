@@ -80,7 +80,7 @@ Opening it to public access makes it accessible from other hosts. This is a **po
 
 ## Miscellaneous administration
 
-A collection of wrapper scripts for Pynab administration:
+A collection of wrapper scripts for Pynab development & administration:
 - update_pynab_messages
 
 		pi@Bunny:~ $ update_pynab_messages -h
@@ -119,6 +119,11 @@ A collection of wrapper scripts for Pynab administration:
 			Run Python syntax checkers on Pynab modules MODULE...
 			-b : run black   -p : run pycodestyle   -f : run flake8   -i : run isort
 			defaults: MODULES='nabcommon nabboot nabd nab?*d nabweb'
+- pytest_pynab
+
+		pi@Bunny:~ $ pytest_pynab -h
+		Usage: pytest_pynab
+			Run pytest unit tests for Pynab
 
 **Note:**  
 These should be used with caution (**only knowingly**).

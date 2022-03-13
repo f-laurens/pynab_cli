@@ -1,0 +1,73 @@
+#!/bin/sh
+# Wrapper pytest script for Pynab
+# ------------------------------
+set_defaults() {
+	SELF=$(basename "${0}")
+	# Pynab defaults
+	systemd_dir="/lib/systemd/system"
+	nabd_service=${systemd_dir}/nabd.service
+	PYNAB=$(sed -nE -e 's|WorkingDirectory=(.+)|\1|p' ${nabd_service} 2>/dev/null)
+	NABD_SERVICE="nabd"
+
+	if [ -t 1 ]
+	then
+		# Text attributes
+		BOLD=`tput bold`; STD=`tput sgr0`
+		RED=`tput setaf 1`; YELLOW=`tput setaf 3`; GREEN=`tput setaf 2`; BLUE=`tput setaf 4`
+	else
+		BOLD=""; STD=""
+		RED=""; YELLOW=""; GREEN=""; BLUE=""
+	fi
+}
+# ------------------------------
+check_pynab() {
+	if [ ! -d "${PYNAB}" ]; then
+		/bin/echo "${RED}Cannot locate Pynab repository!${STD}"
+		exit 42
+	fi
+
+        owner=`stat -c '%U' ${PYNAB}`
+	if [ "$(id -un)" != "${owner}" ]; then
+		/bin/echo "${RED}${SELF} must be run as user ${owner}.${STD}"
+		exit 1
+	fi
+}
+# ------------------------------
+usage() {
+	/bin/echo "Usage: ${SELF}"
+	/bin/echo -e "\tRun pytest unit tests for Pynab"
+}
+# ------------------------------
+get_options() {
+	while getopts "h" option
+	do
+		case $option in
+		    h) usage; exit 0 ;;
+		    \?) usage; exit 42 ;;
+		esac
+	done
+}
+# ------------------------------
+run_pytest() {
+	/bin/echo "${BLUE}Pynab pytest...${STD}"
+	systemctl --quiet is-active ${NABD_SERVICE}
+	if [ $? -eq 0 ]; then
+		/bin/echo "${RED}Please stop Pynab before running tests.${STD}"
+		exit 2
+	fi
+	cd ${PYNAB}
+	cmd="sudo ${PYNAB}/venv/bin/pytest" ; /bin/echo "${BOLD}${cmd}${STD}"
+	eval $cmd
+	status=$?
+	# cleanup test leftovers:
+	sudo /bin/rm -rf ${PYNAB}/.pytest_cache ${PYNAB}/tmp ${PYNAB}/*_recording.raw
+	return $status
+}
+# ------------------------------
+set_defaults
+check_pynab
+get_options $*
+run_pytest
+# ------------------------------
+exit $?
+#
