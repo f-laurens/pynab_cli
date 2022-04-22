@@ -25,10 +25,15 @@ set_defaults() {
 check_pynab() {
 	if [ ! -d "${PYNAB}" ]; then
 		# may be initial install
-		PYNAB=${HOME}/pynab
+		PYNAB=/opt/pynab
 		if [ ! -d "${PYNAB}/.git" ]; then
-			/bin/echo "${RED}${PYNAB} is not a Git repository!${STD}"
-			exit 42
+			/bin/echo "${RED}${PYNAB} is not a Git repository${STD}"
+			# try legacy install location
+			PYNAB=${HOME}/pynab
+			if [ ! -d "${PYNAB}/.git" ]; then
+				/bin/echo "${RED}${PYNAB} is not a Git repository${STD}"
+				exit 42
+			fi
 		fi
 	fi
 
@@ -60,11 +65,11 @@ get_options() {
 install_pynab() {
 	install=$1 ; mode=$2
 	if [ "${install}" != "install" ]; then
-		/bin/echo -e "${YELLOW}Not installing Pynab...${STD}\n"
+		/bin/echo -e "${YELLOW}Not installing Pynab from ${PYNAB}...${STD}\n"
 		usage
 		return 0
 	fi
-	/bin/echo "${BLUE}Installing Pynab...${STD}"
+	/bin/echo "${BLUE}Installing Pynab from ${PYNAB}...${STD}"
 	status=0
 	cd ${PYNAB}
 	cmd="${PYNAB}/install.sh ${mode}" ; /bin/echo "${BOLD}${cmd}${STD}"
