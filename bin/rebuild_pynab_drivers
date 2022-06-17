@@ -115,6 +115,7 @@ check_rebuild ${REBUILD}
 
 build_driver wm8960 "WM8960 (sound)"
 build_driver cr14 "CR14 (RFID)"
+build_driver st25r391x "ST25R3916/7 (NFC)"
 build_driver tagtagtag-ears "Ears"
 
 reboot_after_build
