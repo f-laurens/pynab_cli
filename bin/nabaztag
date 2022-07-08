@@ -6,9 +6,11 @@ set_defaults() {
 	SELF=$(basename "${0}")
 
 	# nc (netcat) option defaults
-	NETCAT_OPTS1="-4 -d -w 1 -v"
-	NETCAT_OPTS2="-4 -w 2 -v"
-	NETCAT_OPTS5="-4 -w 5 -v"
+	NETCAT_TIMEOUT=""
+	NETCAT_OPTS="-4 -v -w "
+	NETCAT_OPTS1="-4 -d -v -w 1"
+	NETCAT_OPTS2="-4 -v -w 2"
+	NETCAT_OPTS5="-4 -v -w 5"
 	NABD_HOST=localhost; NABD_PORT=10543
 	VIRTUAL_NABD=""; VIRTUAL_NABD_PORT=10544
 
@@ -17,6 +19,7 @@ set_defaults() {
 	GESTALT_PACKET="{\\\"type\\\": \\\"gestalt\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
 	TEST_EARS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"ears\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
 	TEST_LEDS_PACKET="{\\\"type\\\": \\\"test\\\", \\\"test\\\": \\\"leds\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
+	MODE_PACKET="{\\\"type\\\": \\\"mode\\\", \\\"mode\\\": \\\"idle\\\", \\\"events\\\": [\\\"asr/*\\\",\\\"button\\\",\\\"ears\\\",\\\"rfid/*\\\"], \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
 	SLEEP_PACKET="{\\\"type\\\": \\\"sleep\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
 	WAKEUP_PACKET="{\\\"type\\\": \\\"wakeup\\\", \\\"request_id\\\": \\\"${REQUESTOR}\\\"}"
 	HOST=${NABD_HOST}
@@ -37,13 +40,14 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo -e "Usage: ${SELF} [-g | -e | -l | -s | -w | -p LEFT.RIGHT | -r | -v | -c COMMANDFILE] [HOST]"
+	echo -e "Usage: ${SELF} [-g | -e | -l | -m | -s | -w | -p LEFT.RIGHT | -r | -v | -c COMMANDFILE] [HOST]"
 	echo -e "\tTalk to rabbit HOST (default: ${NABD_HOST})"
 	echo -e "\t no option :\tget state"
 	echo -e "\t\t-h :\tthis usage help"
 	echo -e "\t\t-g :\tget gestalt status"
 	echo -e "\t\t-e :\texecute ears test"
 	echo -e "\t\t-l :\texecute LEDs test"
+	echo -e "\t\t-m :\tmonitor asr/button/ears/rfid events"
 	echo -e "\t\t-s :\tgo to sleep"
 	echo -e "\t\t-w :\twake up"
 	echo -e "\t\t-p :\trotate ears to position LEFT.RIGHT"
@@ -53,12 +57,13 @@ usage() {
 }
 # ------------------------------
 get_options() {
-	getopts "gelswp:rvc:h" option
+	getopts "gelmswp:rvc:h" option
 	if [ $? -eq 0 ]; then
 		case $option in
 		    g) PACKET=$GESTALT_PACKET ;;
 		    e) PACKET=$TEST_EARS_PACKET ;;
 		    l) PACKET=$TEST_LEDS_PACKET ;;
+		    m) PACKET=$MODE_PACKET ; NETCAT_TIMEOUT=3600 ;;
 		    s) PACKET=$SLEEP_PACKET ;;
 		    w) PACKET=$WAKEUP_PACKET ;;
 		    p) set_ears_packet "$OPTARG" ; PACKET=$EARS_PACKET ;;
@@ -126,6 +131,9 @@ nc_nabd() {
 			cmd="nc $NETCAT_OPTS1 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 			eval $cmd
 		fi
+	elif [ -n "$NETCAT_TIMEOUT" ]; then
+		cmd="echo $PACKET | nc $NETCAT_OPTS$NETCAT_TIMEOUT $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
 	else
 		cmd="echo $PACKET | nc $NETCAT_OPTS2 $HOST $NABD_PORT"; echo "${BOLD}${cmd}${STD}"
 		eval $cmd

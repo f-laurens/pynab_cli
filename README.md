@@ -7,13 +7,14 @@ A collection of small command line tools for [Pynab](https://github.com/nabaztag
 A script to send packets to the rabbit's nabd daemon, according to the [Pynab protocol](https://github.com/nabaztag2018/pynab/blob/master/PROTOCOL.md).
 
 		pi@Nabaztag:~ $ nabaztag -h
-		Usage: nabaztag [-g | -e | -l | -s | -w | -p LEFT.RIGHT | -r | -v | -c COMMANDFILE] [HOST]
+		Usage: nabaztag [-g | -e | -l | -m | -s | -w | -p LEFT.RIGHT | -r | -v | -c COMMANDFILE] [HOST]
 			Talk to rabbit HOST (default: localhost)
 			 no option :	get state
 				-h :	this usage help
 				-g :	get gestalt status
 				-e :	execute ears test
 				-l :	execute LEDs test
+				-m :	monitor asr/button/ears/rfid events
 				-s :	go to sleep
 				-w :	wake up
 				-p :	rotate ears to position LEFT.RIGHT
