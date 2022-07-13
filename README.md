@@ -33,13 +33,14 @@ Talking to a remote rabbit is possible only if the nabd socket on this rabbit ha
 A script to get/set the rabbit's Tag:tag:tag sound card low/high volume levels.
 
 		pi@Nabaztag:~ $ tagtagtag-sound -h
-		Usage: tagtagtag-sound [-t | -T] [-m low | -M high]
+		Usage: tagtagtag-sound [-t | -T] [-m low | -M high] [-p]
 			 no option :	get sound volume levels
 				-h :	this usage help
 				-t :	handle volume for Nabaztag
 				-T :	handle volume for Nabaztag:tag (default)
 				-m :	set minimum volume level
 				-M :	set maximum volume level
+				-p :	patch/unpatch ADC mixer (to eliminate NFC card interference)
 
 ## backup/restore_pynab_db
 

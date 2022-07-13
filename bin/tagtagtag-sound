@@ -6,9 +6,14 @@ set_defaults() {
 
 	MIXER_CONF_FILE="/var/lib/tagtagtag-sound/mixer.conf"
 	MIXER_PID_FILE="/run//tagtagtag-mixerd.pid"
+	ALSA_CONF_FILE="/var/lib/alsa/asound.state"
+	ALSA_CONF_ITEM="ADC Data Output Select"
+	ADC_STD_CONF="'Left Data = Left ADC;  Right Data = Right ADC'"
+	ADC_PATCHED_CONF="'Left Data = Right ADC; Right Data = Right ADC'"
 
 	MODEL="Nabaztag:tag"
 	SPEAKER_LOW=""; SPEAKER_HIGH=""
+	PATCH_ALSA_CONF=""
 
 	if [ -t 1 ]; then
 		# Text attributes
@@ -21,23 +26,25 @@ set_defaults() {
 }
 # ------------------------------
 usage() {
-	echo "Usage: ${SELF} [-t | -T] [-m low | -M high]"
+	echo "Usage: ${SELF} [-t | -T] [-m low | -M high] [-p]"
 	echo "\t no option :\tget sound volume levels"
 	echo "\t\t-h :\tthis usage help"
 	echo "\t\t-t :\thandle volume for Nabaztag"
 	echo "\t\t-T :\thandle volume for Nabaztag:tag (default)"
 	echo "\t\t-m :\tset minimum volume level"
 	echo "\t\t-M :\tset maximum volume level"
+	echo "\t\t-p :\tpatch/unpatch ADC mixer (to eliminate NFC card interference)"
 }
 # ------------------------------
 get_options() {
-	while getopts "tTm:M:h" option
+	while getopts "tTm:M:ph" option
 	do
 		case $option in
 		    m) SPEAKER_LOW="$OPTARG" ;;
 		    M) SPEAKER_HIGH="$OPTARG" ;;
 		    t) MODEL="Nabaztag" ;;
 		    T) MODEL="Nabaztag:tag" ;;
+		    p) PATCH_ALSA_CONF="$ADC_PATCHED_CONF" ;;
 		    h) usage; exit 0 ;;
 		    \?) usage; exit 42 ;;
 		esac
@@ -98,6 +105,42 @@ tagtagtag_sound() {
 	else
 		echo "${BOLD}Sound driver configuration file '$MIXER_CONF_FILE' not found!${STD}"
 		exit 1
+	fi
+
+	if [ -n "$PATCH_ALSA_CONF" ]; then
+		if [ -f "$ALSA_CONF_FILE" ]; then
+			grep -q "value ${ADC_STD_CONF}" ${ALSA_CONF_FILE}
+			if [ $? -eq 0 ]; then
+				ADC_CUR_CONF="${ADC_STD_CONF}"
+				ADC_NEW_CONF="${ADC_PATCHED_CONF}"
+			else
+				grep -q "value ${ADC_PATCHED_CONF}" ${ALSA_CONF_FILE}
+				if [ $? -eq 0 ]; then
+					ADC_CUR_CONF="${ADC_PATCHED_CONF}"
+					ADC_NEW_CONF="${ADC_STD_CONF}"
+				else
+					ADC_NEW_CONF=""
+				fi
+			fi
+			if [ -n "$ADC_NEW_CONF" ]; then
+				sudo sed -i -e "s/value ${ADC_CUR_CONF}/value ${ADC_NEW_CONF}/" ${ALSA_CONF_FILE}
+				status=$?
+				if [ $status -ne 0 ]; then
+					echo "${BOLD}Could not update ALSA configuration file '$ALSA_CONF_FILE'!${STD}"
+					exit $status
+				fi
+				sudo alsactl restore
+				status=$?
+				if [ $status -ne 0 ]; then
+					echo "${BOLD}Could not restore new ALSA configuration!${STD}"
+					exit $status
+				fi
+				echo "${BOLD}${ALSA_CONF_ITEM}${STD}: ${GREEN}${ADC_CUR_CONF}${STD} => ${BLUE}${ADC_NEW_CONF}${STD}" 
+			fi
+		else
+			echo "${BOLD}ALSA configuration file '$ALSA_CONF_FILE' not found!${STD}"
+			exit 1
+		fi
 	fi
 	status=$?
 	return $status
