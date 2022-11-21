@@ -8,7 +8,7 @@ set_defaults() {
 	nabd_service=${systemd_dir}/nabd.service
 	PYNAB=$(sed -nE -e 's|WorkingDirectory=(.+)|\1|p' ${nabd_service} 2>/dev/null)
 
-	MODULE_LIST='nab?*d nabweb'
+	MODULE_LIST='nab?*d nabradio nabwebhook nabweb'
 	LOCALES="-l en_US -l en_GB -l fr_FR -l it_IT -l es_ES -l pt_BR -l de_DE -l ja_jP"
 	MAKE=""
 	COMPILE=""

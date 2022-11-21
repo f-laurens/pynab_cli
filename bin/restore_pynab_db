@@ -13,7 +13,7 @@ set_defaults() {
 
 	# Pynab services to stop before restoring database
 	NABD_SERVICE="nabd" ; NABD_SOCKET="nabd.socket"
-	daemon_list=$(cd /lib/systemd/system; /bin/ls nab*d.service 2>/dev/null | sed -e "s/\.service//g")
+	daemon_list=$(cd /lib/systemd/system; /bin/ls nab*d.service nabradio.service nabwebhook.service 2>/dev/null | sed -e "s/\.service//g")
 	for service in ${daemon_list}
 	do
 		[ "${service}" = "${NABD_SERVICE}" ] && continue

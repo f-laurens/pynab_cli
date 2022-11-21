@@ -12,7 +12,7 @@ set_defaults() {
 	PYCODESTYLE_OPTS="--ignore=E121,E123,E126,E226,E24,E704,W503,W504,E203"
 	FLAKE8_OPTS="--extend-ignore=E203,E501"
 	ISORT_OPTS="-l 79 --profile black --indent 4"
-	MODULE_LIST='nabcommon nabboot nabd nab?*d nabweb'
+	MODULE_LIST='nabcommon nabboot nabd nab?*d nabradio nabwebhook nabweb'
 	PYCODESTYLE=""
 	FLAKE8=""
 	BLACK=""

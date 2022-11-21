@@ -14,7 +14,7 @@ set_defaults() {
 	NABD_SOCKET_CONF="${SYSTEMD_DIR}/${NABD_SOCKET}"
 	NABD_ADDR_KEY="ListenStream"; NABD_LOCAL_ADDR="127.0.0.1"; NABD_PUBLIC_ADDR="0.0.0.0"
 	NABD_LOG="${LOG_DIR}/${NABD_SERVICE}.log"
-	daemon_list=$(cd ${SYSTEMD_DIR}; /bin/ls nab*d.service 2>/dev/null | sed -e "s/\.service//g")
+	daemon_list=$(cd ${SYSTEMD_DIR}; /bin/ls nab*d.service nabradio.service nabwebhook.service 2>/dev/null | sed -e "s/\.service//g")
 	for service in ${daemon_list}
 	do
 		[ "${service}" = "${NABD_SERVICE}" ] && continue
