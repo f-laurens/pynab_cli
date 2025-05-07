@@ -65,12 +65,14 @@ On the other hand restore must be done without concurrent accesses to the databa
 A script to manage Pynab services.
 		
 		pi@Nabaztag:~ $ pynab -h
-		Usage: pynab [-status | -start | -stop | -restart | -local | -public | -log [NUM]]
+		Usage: pynab [-status | -start | -stop | -restart | -enable | -disable | -local | -public | -log [NUM]]
 			no option :	show status of Pynab services
 			    -help :	this usage help
 			   -start :	start Pynab services
 			    -stop :	stop Pynab services
 			 -restart :	restart Pynab services
+			  -enable :	enable Pynab services
+			 -disable :	disable Pynab services
 			  -status :	show status of Pynab services
 			   -local :	restrict nabd socket to local access
 			  -public :	open nabd socket to public access

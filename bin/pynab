@@ -36,12 +36,14 @@ set_defaults() {
 # ------------------------------
 usage() {
 	[ -n "${1}" ] && echo "Illegal option ${1}" >&2
-	echo "Usage: ${SELF} [-status | -start | -stop | -restart | -local | -public | -log [NUM]]"
+	echo "Usage: ${SELF} [-status | -start | -stop | -restart | -enable | -disable | -local | -public | -log [NUM]]"
 	echo "\tno option :\tshow status of Pynab services"
 	echo "\t    -help :\tthis usage help"
 	echo "\t   -start :\tstart Pynab services"
 	echo "\t    -stop :\tstop Pynab services"
 	echo "\t -restart :\trestart Pynab services"
+	echo "\t  -enable :\tenable Pynab services"
+	echo "\t -disable :\tdisable Pynab services"
 	echo "\t  -status :\tshow status of Pynab services"
 	echo "\t   -local :\trestrict nabd socket to local access"
 	echo "\t  -public :\topen nabd socket to public access"
@@ -57,10 +59,14 @@ get_options() {
 		CMD="start" ;;
 	    -sto*)
 		CMD="stop" ;;
-	    -stat*)
-		CMD="status" ;;
 	    -r*)
 		CMD="restart" ;;
+	    -e*)
+		CMD="enable" ;;
+	    -d*)
+		CMD="disable" ;;
+	    -stat*)
+		CMD="status" ;;
 	    -loc*)
 		CMD="socket" ; ARG="${NABD_LOCAL_ADDR}" ;;
 	    -p*)
@@ -83,24 +89,6 @@ get_options() {
 		usage "${ARG1}"
 		exit 42 ;;
 	esac
-}
-# ------------------------------
-stop_services() {
-	if [ -n "${PYNAB_SERVICES}" ]; then
-		echo "Stopping Pynab services..."
-		cmd="sudo systemctl stop ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
-		eval $cmd
-		status=$? ; [ $status -ne 0 ] && return $status
-		cmd="sudo systemctl stop ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
-		eval $cmd
-		status=$? ; [ $status -ne 0 ] && return $status
-		cmd="sudo systemctl stop ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
-		eval $cmd
-		status=$? ; [ $status -ne 0 ] && return $status
-	else
-		status=0
-	fi
-	return $status
 }
 # ------------------------------
 start_services() {
@@ -126,6 +114,60 @@ start_services() {
 			fi
 		done
 		cmd="sudo systemctl start ${pynab_services}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+stop_services() {
+	if [ -n "${PYNAB_SERVICES}" ]; then
+		echo "Stopping Pynab services..."
+		cmd="sudo systemctl stop ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl stop ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl stop ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+enable_services() {
+	if [ -n "${PYNAB_SERVICES}" ]; then
+		echo "Enabling Pynab services..."
+		cmd="sudo systemctl enable ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl enable ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl enable ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+	else
+		status=0
+	fi
+	return $status
+}
+# ------------------------------
+disable_services() {
+	if [ -n "${PYNAB_SERVICES}" ]; then
+		echo "Disabling Pynab services..."
+		cmd="sudo systemctl disable --now ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl disable --now ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		eval $cmd
+		status=$? ; [ $status -ne 0 ] && return $status
+		cmd="sudo systemctl disable --now ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
 	else
@@ -224,10 +266,14 @@ case "${CMD}" in
 	start_services ;;
     stop)
 	stop_services ;;
-    status)
-	status_services ;;
     restart)
 	stop_services && start_services ;;
+    enable)
+	enable_services ;;
+    disable)
+	disable_services ;;
+    status)
+	status_services ;;
     socket)
 	socket_conf ${ARG} ;;
     log)
