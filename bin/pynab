@@ -6,6 +6,7 @@ set_defaults() {
 
 	SYSTEMD_DIR="/lib/systemd/system"
 	LOG_DIR="/var/log"
+	AVAHI_SERVICE_DIR="/etc/avahi/services"
 	LOG_OPTS="-v"
 	STATUS_OPTS="--no-pager --full"
 
@@ -91,6 +92,24 @@ get_options() {
 	esac
 }
 # ------------------------------
+# Advertize given service thru Avahi
+avahi_service_on() {
+	service_file=${AVAHI_SERVICE_DIR}/${1}.service
+	if [ -f "${service_file}.off" ]
+	then
+		sudo mv ${service_file}.off ${service_file}
+	fi
+}
+# ------------------------------
+# Stop advertizing given service thru Avahi
+avahi_service_off() {
+	service_file=${AVAHI_SERVICE_DIR}/${1}.service
+	if [ -f "${service_file}" ]
+	then
+		sudo mv ${service_file} ${service_file}.off
+	fi
+}
+# ------------------------------
 start_services() {
 	if [ -n "${PYNAB_SERVICES}" ]; then
 		echo "Starting Pynab services..."
@@ -105,6 +124,7 @@ start_services() {
 			cmd="sudo systemctl start ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
 			eval $cmd
 			status=$? ; [ $status -ne 0 ] && return $status
+			avahi_service_on pynab
 		fi
 		for service in ${PYNAB_SERVICES}
 		do
@@ -116,6 +136,7 @@ start_services() {
 		cmd="sudo systemctl start ${pynab_services}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
+		avahi_service_on nabblockly
 	else
 		status=0
 	fi
@@ -128,12 +149,14 @@ stop_services() {
 		cmd="sudo systemctl stop ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
+		avahi_service_off nabblockly
 		cmd="sudo systemctl stop ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
 		cmd="sudo systemctl stop ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
+		avahi_service_off pynab
 	else
 		status=0
 	fi
@@ -143,15 +166,17 @@ stop_services() {
 enable_services() {
 	if [ -n "${PYNAB_SERVICES}" ]; then
 		echo "Enabling Pynab services..."
-		cmd="sudo systemctl enable ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
+		cmd="sudo systemctl enable --now ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
-		cmd="sudo systemctl enable ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
+		avahi_service_on nabblockly
+		cmd="sudo systemctl enable --now ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
-		cmd="sudo systemctl enable ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
+		cmd="sudo systemctl enable --now ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
+		avahi_service_on pynab
 	else
 		status=0
 	fi
@@ -164,12 +189,14 @@ disable_services() {
 		cmd="sudo systemctl disable --now ${PYNAB_SERVICES}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
+		avahi_service_off nabblockly
 		cmd="sudo systemctl disable --now ${NABD_SOCKET}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
 		cmd="sudo systemctl disable --now ${NABD_SERVICE}" ; echo "${BOLD}${cmd}${STD}"
 		eval $cmd
 		status=$? ; [ $status -ne 0 ] && return $status
+		avahi_service_off pynab
 	else
 		status=0
 	fi
